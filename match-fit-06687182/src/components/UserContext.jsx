@@ -10,8 +10,10 @@ export const UserProvider = ({ children }) => {
   const loadCurrentUser = async () => {
     setIsLoadingUser(true);
     try {
-      const user = await base44.auth.me();
-      setCurrentUser(user);
+      // TODO: Replace with your authentication system
+      // const user = await base44.auth.me();
+      // Temporarily disabled to allow local development without base44
+      setCurrentUser(null);
     } catch (error) {
       console.log("User not authenticated");
       setCurrentUser(null);

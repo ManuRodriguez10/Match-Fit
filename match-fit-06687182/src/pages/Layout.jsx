@@ -15,7 +15,7 @@ import {
   X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { UserProvider, useUser } from "./components/UserContext";
+import { UserProvider, useUser } from "@/components/UserContext";
 
 function LayoutContent({ children, currentPageName }) {
   const location = useLocation();
@@ -24,16 +24,18 @@ function LayoutContent({ children, currentPageName }) {
 
   // Handle redirection for unauthenticated users
   useEffect(() => {
-    // If loading is complete, it's not the landing page, and there's no current user,
-    // then the user is unauthenticated and needs to be redirected to login.
-    if (!isLoadingUser && !currentUser && currentPageName !== "LandingPage") {
-      base44.auth.redirectToLogin(window.location.pathname + window.location.search);
-    }
+    // TODO: Replace with your authentication system
+    // Temporarily disabled to allow local development without base44
+    // if (!isLoadingUser && !currentUser && currentPageName !== "LandingPage") {
+    //   base44.auth.redirectToLogin(window.location.pathname + window.location.search);
+    // }
   }, [isLoadingUser, currentUser, currentPageName]);
 
   const handleLogout = async () => {
     try {
-      await base44.auth.logout();
+      // TODO: Replace with your authentication system
+      // await base44.auth.logout();
+      // Temporarily disabled to allow local development without base44
       window.location.href = createPageUrl("LandingPage");
     } catch (error) {
       console.error("Error logging out:", error);
