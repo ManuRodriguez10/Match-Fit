@@ -1,0 +1,410 @@
+import React, { useState, useEffect } from "react";
+import { base44 } from "@/api/base44Client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Calendar, Trophy } from "lucide-react";
+import { format, isPast, parseISO } from "date-fns";
+import LineupField from "./LineupField";
+
+export default function PlayerLineupViewer({ user, initialEventId }) {
+  const [lineups, setLineups] = useState([]);
+  const [events, setEvents] = useState([]);
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
+  const [teamPlayers, setTeamPlayers] = useState([]); // New state for team players
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedEventId, setSelectedEventId] = useState(null);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  useEffect(() => {
+    // When events are loaded, select the appropriate event
+    if (upcomingEvents.length > 0 && !selectedEventId) {
+      if (initialEventId) {
+        // Check if initialEventId matches an existing upcoming event
+        const matchingEvent = upcomingEvents.find(e => e.id === initialEventId);
+        if (matchingEvent) {
+          setSelectedEventId(initialEventId);
+        } else {
+          // Default to first upcoming event if initialEventId doesn't match or is past
+          setSelectedEventId(upcomingEvents[0].id);
+        }
+      } else {
+        // No initialEventId, default to first upcoming event
+        setSelectedEventId(upcomingEvents[0].id);
+      }
+    }
+  }, [upcomingEvents, initialEventId, selectedEventId]);
+
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const [lineupsData, eventsData, playersResponse] = await Promise.all([
+        base44.entities.Lineup.filter({ team_id: user.team_id, published: true }, "-created_date"),
+        base44.entities.Event.filter({ team_id: user.team_id, type: "game" }, "date"),
+        base44.functions.invoke('getTeamMembers') // Fetch team members
+      ]);
+      
+      const allPlayers = playersResponse.data.teamMembers.filter(member => member.team_role === "player");
+      
+      // Filter to only include future games
+      const now = new Date();
+      const futureGames = eventsData.filter(event => {
+        const eventDate = parseISO(event.date);
+        return !isPast(eventDate) || eventDate.toDateString() === now.toDateString();
+      });
+      
+      setLineups(lineupsData);
+      setEvents(eventsData);
+      setUpcomingEvents(futureGames);
+      setTeamPlayers(allPlayers); // Set team players state
+    } catch (error) {
+      console.error("Error loading lineups:", error);
+    }
+    setIsLoading(false);
+  };
+
+  const getFieldPositions = (formation) => {
+    const formations = {
+      "4-4-2": [
+        { name: "GK", label: "Goalkeeper", top: "85%", left: "50%" },
+        { name: "LB", label: "Left Back", top: "65%", left: "15%" },
+        { name: "CB1", label: "Center Back", top: "70%", left: "40%" },
+        { name: "CB2", label: "Center Back", top: "70%", left: "60%" },
+        { name: "RB", label: "Right Back", top: "65%", left: "85%" },
+        { name: "LM", label: "Left Mid", top: "40%", left: "15%" },
+        { name: "CM1", label: "Center Mid", top: "45%", left: "40%" },
+        { name: "CM2", label: "Center Mid", top: "45%", left: "60%" },
+        { name: "RM", label: "Right Mid", top: "40%", left: "85%" },
+        { name: "ST1", label: "Striker", top: "15%", left: "40%" },
+        { name: "ST2", label: "Striker", top: "15%", left: "60%" }
+      ],
+      "4-3-3": [
+        { name: "GK", label: "Goalkeeper", top: "85%", left: "50%" },
+        { name: "LB", label: "Left Back", top: "65%", left: "15%" },
+        { name: "CB1", label: "Center Back", top: "70%", left: "40%" },
+        { name: "CB2", label: "Center Back", top: "70%", left: "60%" },
+        { name: "RB", label: "Right Back", top: "65%", left: "85%" },
+        { name: "CM1", label: "Center Mid", top: "45%", left: "33%" },
+        { name: "CM2", label: "Center Mid", top: "45%", left: "50%" },
+        { name: "CM3", label: "Center Mid", top: "45%", left: "67%" },
+        { name: "LW", label: "Left Wing", top: "15%", left: "15%" },
+        { name: "ST", label: "Striker", top: "10%", left: "50%" },
+        { name: "RW", label: "Right Wing", top: "15%", left: "85%" }
+      ],
+      "3-5-2": [
+        { name: "GK", label: "Goalkeeper", top: "85%", left: "50%" },
+        { name: "CB1", label: "Center Back", top: "70%", left: "25%" },
+        { name: "CB2", label: "Center Back", top: "70%", left: "50%" },
+        { name: "CB3", label: "Center Back", top: "70%", left: "75%" },
+        { name: "LWB", label: "Left Wing Back", top: "50%", left: "10%" },
+        { name: "CM1", label: "Center Mid", top: "50%", left: "33%" },
+        { name: "CM2", label: "Center Mid", top: "50%", left: "50%" },
+        { name: "CM3", label: "Center Mid", top: "50%", left: "67%" },
+        { name: "RWB", label: "Right Wing Back", top: "50%", left: "90%" },
+        { name: "ST1", label: "Striker", top: "15%", left: "40%" },
+        { name: "ST2", label: "Striker", top: "15%", left: "60%" }
+      ],
+      "4-2-3-1": [
+        { name: "GK", label: "Goalkeeper", top: "85%", left: "50%" },
+        { name: "LB", label: "Left Back", top: "65%", left: "15%" },
+        { name: "CB1", label: "Center Back", top: "70%", left: "40%" },
+        { name: "CB2", label: "Center Back", top: "70%", left: "60%" },
+        { name: "RB", label: "Right Back", top: "65%", left: "85%" },
+        { name: "CDM1", label: "Def Mid", top: "50%", left: "40%" },
+        { name: "CDM2", label: "Def Mid", top: "50%", left: "60%" },
+        { name: "LAM", label: "Left Attack Mid", top: "30%", left: "20%" },
+        { name: "CAM", label: "Center Attack Mid", top: "30%", left: "50%" },
+        { name: "RAM", label: "Right Attack Mid", top: "30%", left: "80%" },
+        { name: "ST", label: "Striker", top: "10%", left: "50%" }
+      ],
+      "3-4-3": [
+        { name: "GK", label: "Goalkeeper", top: "85%", left: "50%" },
+        { name: "CB1", label: "Center Back", top: "70%", left: "25%" },
+        { name: "CB2", label: "Center Back", top: "70%", left: "50%" },
+        { name: "CB3", label: "Center Back", top: "70%", left: "75%" },
+        { name: "LM", label: "Left Mid", top: "45%", left: "15%" },
+        { name: "CM1", label: "Center Mid", top: "45%", left: "40%" },
+        { name: "CM2", label: "Center Mid", top: "45%", left: "60%" },
+        { name: "RM", label: "Right Mid", top: "45%", left: "85%" },
+        { name: "LW", label: "Left Wing", top: "15%", left: "20%" },
+        { name: "ST", label: "Striker", top: "10%", left: "50%" },
+        { name: "RW", label: "Right Wing", top: "15%", left: "80%" }
+      ]
+    };
+    return formations[formation] || formations["4-4-2"];
+  };
+
+  const getLineupForEvent = (eventId) => {
+    return lineups.find(l => l.event_id === eventId);
+  };
+
+  const isPlayerInLineup = (lineup, playerEmail) => {
+    const inStarting = lineup.starting_lineup?.some(p => p.player_email === playerEmail);
+    const inSubs = lineup.substitutes?.includes(playerEmail);
+    return inStarting || inSubs;
+  };
+
+  // New helper function to get player details by email
+  const getPlayerByEmail = (email) => {
+    return teamPlayers.find(p => p.email === email);
+  };
+
+  // Check if event is in the past
+  const isEventPast = (eventDate) => {
+    const date = parseISO(eventDate);
+    const now = new Date();
+    return isPast(date) && date.toDateString() !== now.toDateString();
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--primary-main)]"></div>
+      </div>
+    );
+  }
+
+  if (events.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Game Lineups</h1>
+          <p className="text-gray-600 mt-1">View team lineups for upcoming games</p>
+        </div>
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Trophy className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Games Scheduled</h3>
+            <p className="text-gray-600">Your coach hasn't scheduled any games yet.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (upcomingEvents.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Game Lineups</h1>
+          <p className="text-gray-600 mt-1">View team lineups for upcoming games</p>
+        </div>
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Calendar className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Upcoming Games</h3>
+            <p className="text-gray-600 mb-2">All scheduled games have already passed.</p>
+            <p className="text-gray-500 text-sm">Lineups are only shown for future games.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Game Lineups</h1>
+        <p className="text-gray-600 mt-1">View team lineups for upcoming games</p>
+      </div>
+
+      <Tabs value={selectedEventId} onValueChange={setSelectedEventId}>
+        <TabsList className="w-full justify-start overflow-x-auto flex-wrap">
+          {upcomingEvents.map((event) => {
+            const lineup = getLineupForEvent(event.id);
+            const inLineup = lineup ? isPlayerInLineup(lineup, user.email) : false;
+            
+            return (
+              <TabsTrigger key={event.id} value={event.id} className="flex items-center gap-2 text-xs md:text-sm">
+                <span className="truncate max-w-[120px] md:max-w-none">{event.title || format(new Date(event.date), "MMM d")}</span>
+                {inLineup && <span className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></span>}
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
+
+        {upcomingEvents.map((event) => {
+          const lineup = getLineupForEvent(event.id);
+          const inStarting = lineup?.starting_lineup?.some(p => p.player_email === user.email);
+          const inSubs = lineup?.substitutes?.includes(user.email);
+          const eventIsPast = isEventPast(event.date);
+          
+          return (
+            <TabsContent key={event.id} value={event.id} className="space-y-6">
+              {/* Event Details Card */}
+              <Card>
+                <CardHeader>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                      <CardTitle className="text-lg md:text-xl">{event.title}</CardTitle>
+                      <p className="text-xs md:text-sm text-gray-600 mt-1">
+                        {format(new Date(event.date), "EEEE, MMMM d, yyyy 'at' h:mm a")}
+                      </p>
+                      {event.location && (
+                        <p className="text-xs md:text-sm text-gray-600">{event.location}</p>
+                      )}
+                    </div>
+                    {(inStarting || inSubs) && (
+                      <div className={`px-3 md:px-4 py-2 rounded-lg ${
+                        inStarting 
+                          ? "bg-green-100 text-green-800" 
+                          : "bg-blue-100 text-blue-800"
+                      }`}>
+                        <p className="font-semibold text-sm md:text-base">
+                          {inStarting ? "Starting XI" : "Substitute"}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </CardHeader>
+              </Card>
+
+              {/* Past Event Alert */}
+              {eventIsPast && (
+                <Alert className="bg-amber-50 border-amber-200">
+                  <Calendar className="h-4 w-4 text-amber-600" />
+                  <AlertDescription className="text-amber-800">
+                    This game has already passed. You are viewing the historical lineup.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Lineup Display or Not Published Message */}
+              {lineup ? (
+                <>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg md:text-xl">Starting Lineup - {lineup.formation}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="w-full mx-auto">
+                        <div className="relative w-full bg-gradient-to-b from-green-600 to-green-700 rounded-lg overflow-hidden" style={{ paddingTop: "60%" }}>
+                          {/* Field lines */}
+                          <div className="absolute inset-0">
+                            <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-white/40"></div>
+                            <div className="absolute top-1/2 left-1/2 w-20 h-20 border-2 border-white/40 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+                            <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-white/60 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+                            <div className="absolute top-0 left-1/4 right-1/4 h-14 border-2 border-white/40 border-t-0"></div>
+                            <div className="absolute bottom-0 left-1/4 right-1/4 h-14 border-2 border-white/40 border-b-0"></div>
+                            <div className="absolute top-0 left-[37.5%] right-[37.5%] h-7 border-2 border-white/40 border-t-0"></div>
+                            <div className="absolute bottom-0 left-[37.5%] right-[37.5%] h-7 border-2 border-white/40 border-b-0"></div>
+                          </div>
+                          
+                          {/* Players */}
+                          {getFieldPositions(lineup.formation).map((pos) => {
+                            const playerAssignment = lineup.starting_lineup?.find(p => p.position === pos.name);
+                            const player = playerAssignment ? getPlayerByEmail(playerAssignment.player_email) : null;
+                            const displayName = player && player.first_name && player.last_name
+                              ? `${player.first_name} ${player.last_name}`
+                              : playerAssignment?.player_email || null; // Fallback to email if name not found
+                            const isCurrentPlayer = playerAssignment?.player_email === user.email;
+                            
+                            return (
+                              <div
+                                key={pos.name}
+                                className="absolute transform -translate-x-1/2 -translate-y-1/2"
+                                style={{ top: pos.top, left: pos.left }}
+                              >
+                                {displayName ? (
+                                  <div className={`flex flex-col items-center ${isCurrentPlayer ? 'scale-110' : ''}`}>
+                                    <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-white font-bold text-xs md:text-sm shadow-lg ${
+                                      isCurrentPlayer 
+                                        ? 'bg-yellow-500 ring-2 ring-yellow-300' 
+                                        : 'bg-blue-600'
+                                    }`}>
+                                      {player?.jersey_number || (displayName.split(' ').map(n => n[0]).join('')).slice(0, 2)}
+                                    </div>
+                                    <span className="mt-1 text-[8px] md:text-xs font-semibold text-white bg-black/40 px-1.5 md:px-2 py-0.5 rounded whitespace-nowrap max-w-[60px] md:max-w-none truncate">
+                                      {displayName}
+                                    </span>
+                                    <span className="text-[8px] md:text-[10px] text-white/80">{pos.label}</span>
+                                  </div>
+                                ) : (
+                                  <div className="flex flex-col items-center">
+                                    <div className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-dashed border-white/60 flex items-center justify-center">
+                                      <span className="text-white/60 text-[10px]">?</span>
+                                    </div>
+                                    <span className="mt-1 text-[8px] md:text-[10px] text-white/70">{pos.label}</span>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {lineup.substitutes && lineup.substitutes.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg md:text-xl">Substitutes ({lineup.substitutes.length})</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
+                          {lineup.substitutes.map((playerEmail) => {
+                            const player = getPlayerByEmail(playerEmail);
+                            const displayName = player && player.first_name && player.last_name
+                              ? `${player.first_name} ${player.last_name}`
+                              : playerEmail; // Fallback to email
+                            const isCurrentPlayer = playerEmail === user.email;
+                            
+                            return (
+                              <div key={playerEmail} className={`border rounded-lg p-3 text-center ${
+                                isCurrentPlayer ? 'ring-2 ring-yellow-500 bg-yellow-50' : ''
+                              }`}>
+                                <div className="w-10 h-10 md:w-12 md:h-12 mx-auto rounded-full flex items-center justify-center font-bold text-base md:text-lg mb-2 bg-gray-200 text-gray-700">
+                                  {player?.jersey_number || (displayName.split(' ').map(n => n[0]).join('')).slice(0, 2)}
+                                </div>
+                                <p className="text-xs md:text-sm font-medium truncate">{displayName}</p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </>
+              ) : (
+                <Card>
+                  <CardContent className="py-8 sm:py-16">
+                    <div className="max-w-4xl mx-auto">
+                      <div className="relative w-full bg-gradient-to-b from-green-600 to-green-700 rounded-lg overflow-hidden" style={{ paddingTop: "60%" }}>
+                        {/* Field lines */}
+                        <div className="absolute inset-0">
+                          <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-white/40"></div>
+                          <div className="absolute top-1/2 left-1/2 w-20 h-20 border-2 border-white/40 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+                          <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-white/60 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+                          <div className="absolute top-0 left-1/4 right-1/4 h-14 border-2 border-white/40 border-t-0"></div>
+                          <div className="absolute bottom-0 left-1/4 right-1/4 h-14 border-2 border-white/40 border-b-0"></div>
+                          <div className="absolute top-0 left-[37.5%] right-[37.5%] h-7 border-2 border-white/40 border-t-0"></div>
+                          <div className="absolute bottom-0 left-[37.5%] right-[37.5%] h-7 border-2 border-white/40 border-b-0"></div>
+                        </div>
+                        
+                        {/* Not Published Message */}
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-4 text-center max-w-xs sm:p-8 sm:max-w-md mx-4">
+                            <Trophy className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-gray-400 mb-3 sm:mb-4" />
+                            <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">
+                              Lineup Not Published Yet
+                            </h3>
+                            <p className="text-sm sm:text-base text-gray-600">
+                              Your coach hasn't published the lineup for this game yet. Check back soon!
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+          );
+        })}
+      </Tabs>
+    </div>
+  );
+}
