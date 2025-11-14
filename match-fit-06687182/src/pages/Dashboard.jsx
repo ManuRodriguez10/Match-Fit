@@ -12,7 +12,9 @@ export default function Dashboard() {
 
   const handleResetRole = async () => {
     try {
-      await base44.auth.updateMe({ team_role: null });
+      // TODO: Replace with your authentication system
+      // await base44.auth.updateMe({ team_role: null });
+      // Temporarily disabled to allow local development without base44
       await loadCurrentUser();
     } catch (error) {
       console.error("Error resetting role:", error);
@@ -29,6 +31,18 @@ export default function Dashboard() {
               <div key={i} className="h-32 bg-gray-200 rounded-lg"></div>
             ))}
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If no user, redirect to landing page (handled by showing landing page content)
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">Please log in to continue</h2>
+          <p className="text-gray-600">Authentication system needs to be implemented</p>
         </div>
       </div>
     );

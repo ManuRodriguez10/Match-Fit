@@ -16,11 +16,13 @@ export default function LandingPage() {
 
   const checkAuthentication = async () => {
     try {
-      const isAuthenticated = await base44.auth.isAuthenticated();
-      if (isAuthenticated) {
-        // User is already logged in, redirect to Dashboard
-        navigate(createPageUrl("Dashboard"));
-      }
+      // TODO: Replace with your authentication system
+      // const isAuthenticated = await base44.auth.isAuthenticated();
+      // Temporarily disabled to allow local development without base44
+      // if (isAuthenticated) {
+      //   // User is already logged in, redirect to Dashboard
+      //   navigate(createPageUrl("Dashboard"));
+      // }
     } catch (error) {
       // User is not authenticated, stay on landing page
       console.log("User not authenticated, showing landing page");
@@ -30,11 +32,15 @@ export default function LandingPage() {
   };
 
   const handleLogin = () => {
-    base44.auth.redirectToLogin();
+    // TODO: Replace with your authentication system
+    // For now, navigate to Dashboard to allow exploring the app
+    navigate(createPageUrl("Dashboard"));
   };
 
   const handleSignUp = () => {
-    base44.auth.redirectToLogin();
+    // TODO: Replace with your authentication system
+    // For now, navigate to Dashboard to allow exploring the app
+    navigate(createPageUrl("Dashboard"));
   };
 
   if (isCheckingAuth) {
