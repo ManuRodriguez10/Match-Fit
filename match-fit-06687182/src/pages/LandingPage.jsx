@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/api/supabaseClient";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
@@ -16,15 +16,14 @@ export default function LandingPage() {
 
   const checkAuthentication = async () => {
     try {
-      // TODO: Replace with your authentication system
-      // const isAuthenticated = await base44.auth.isAuthenticated();
-      // Temporarily disabled to allow local development without base44
-      // if (isAuthenticated) {
-      //   // User is already logged in, redirect to Dashboard
-      //   navigate(createPageUrl("Dashboard"));
-      // }
+      const { data, error } = await supabase.auth.getSession();
+      if (error) throw error;
+
+      if (data?.session) {
+        navigate(createPageUrl("Dashboard"));
+        return;
+      }
     } catch (error) {
-      // User is not authenticated, stay on landing page
       console.log("User not authenticated, showing landing page");
     } finally {
       setIsCheckingAuth(false);

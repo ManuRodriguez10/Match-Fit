@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createPageUrl } from "@/utils";
 import { ArrowRight } from "lucide-react";
+import { supabase } from "@/api/supabaseClient";
 
 const LOGO_FULL =
   "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68c332f7b5426ee106687182/32285dc04_MatchFitLogo.png";
@@ -38,10 +39,15 @@ export default function Login() {
     setIsSubmitting(true);
 
     try {
-      // TODO: Replace with your authentication call
-      // await login(formState.email, formState.password)
-      console.log("Login attempt", formState);
-      // Navigate to dashboard once authentication is ready
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email: formState.email,
+        password: formState.password
+      });
+
+      if (authError) {
+        throw authError;
+      }
+
       navigate(createPageUrl("Dashboard"));
     } catch (err) {
       setError(err.message || "Unable to sign in. Please try again.");

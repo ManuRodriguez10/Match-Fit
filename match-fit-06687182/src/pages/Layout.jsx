@@ -2,7 +2,7 @@
 import React, { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/api/supabaseClient";
 import {
   LayoutDashboard,
   Calendar,
@@ -22,21 +22,18 @@ function LayoutContent({ children, currentPageName }) {
   const { currentUser, isLoadingUser } = useUser();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
-  // Handle redirection for unauthenticated users
+  const authFreePages = ["LandingPage", "Login", "Signup"];
+
   useEffect(() => {
-    // TODO: Replace with your authentication system
-    // Temporarily disabled to allow local development without base44
-    // if (!isLoadingUser && !currentUser && currentPageName !== "LandingPage") {
-    //   base44.auth.redirectToLogin(window.location.pathname + window.location.search);
-    // }
+    if (!isLoadingUser && !currentUser && !authFreePages.includes(currentPageName)) {
+      window.location.href = createPageUrl("Login");
+    }
   }, [isLoadingUser, currentUser, currentPageName]);
 
   const handleLogout = async () => {
     try {
-      // TODO: Replace with your authentication system
-      // await base44.auth.logout();
-      // Temporarily disabled to allow local development without base44
-      window.location.href = createPageUrl("LandingPage");
+      await supabase.auth.signOut();
+      window.location.href = createPageUrl("Login");
     } catch (error) {
       console.error("Error logging out:", error);
     }
@@ -66,8 +63,6 @@ function LayoutContent({ children, currentPageName }) {
     );
   }
 
-  const authFreePages = ["LandingPage", "Login", "Signup"];
-
   // If loading is complete, it's not an auth-free page, and there's no current user,
   // the useEffect above will handle the redirect. Don't render anything here.
   if (!currentUser && !isLoadingUser && !authFreePages.includes(currentPageName)) {
@@ -75,7 +70,11 @@ function LayoutContent({ children, currentPageName }) {
   }
 
   // Check if user is in onboarding state (only after user is loaded)
-  const isOnboarding = currentPageName === "Dashboard" && currentUser && (!currentUser.team_role || !currentUser.team_id);
+  const userTeamRole = currentUser?.user_metadata?.team_role || currentUser?.team_role;
+  const userTeamId = currentUser?.user_metadata?.team_id || currentUser?.team_id;
+  const displayName = currentUser?.user_metadata?.full_name || currentUser?.email || "User";
+
+  const isOnboarding = currentPageName === "Dashboard" && currentUser && (!userTeamRole || !userTeamId);
 
   // If landing page or onboarding, render without layout
   if (authFreePages.includes(currentPageName) || isOnboarding) {
@@ -104,7 +103,7 @@ function LayoutContent({ children, currentPageName }) {
     { title: "Profile", url: createPageUrl("Profile"), icon: User },
   ];
 
-  const navigation = currentUser?.team_role === "coach" ? coachNavigation : playerNavigation;
+  const navigation = userTeamRole === "coach" ? coachNavigation : playerNavigation;
 
   return (
     <div className="min-h-screen bg-gray-50">

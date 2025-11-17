@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createPageUrl } from "@/utils";
 import { ArrowRight } from "lucide-react";
+import { supabase } from "@/api/supabaseClient";
 
 const LOGO_FULL =
   "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68c332f7b5426ee106687182/32285dc04_MatchFitLogo.png";
@@ -22,6 +23,7 @@ export default function Signup() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -47,12 +49,40 @@ export default function Signup() {
     }
 
     setError("");
+    setSuccessMessage("");
     setIsSubmitting(true);
 
     try {
-      // TODO: Replace with your signup call
-      console.log("Signup attempt", formState);
-      navigate(createPageUrl("Dashboard"));
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: formState.email,
+        password: formState.password,
+        options: {
+          data: {
+            full_name: formState.fullName,
+            role: formState.role
+          },
+          emailRedirectTo: `${window.location.origin}/login`
+        }
+      });
+
+      if (signUpError) {
+        throw signUpError;
+      }
+
+      // Profile is automatically created by database trigger
+      // If we need to update it with additional data, we can do that here
+      // The trigger will create the profile from user_metadata
+
+      if (data?.session) {
+        navigate(createPageUrl("Dashboard"));
+      } else {
+        setSuccessMessage("Please check your email to confirm your account before logging in.");
+        setFormState((prev) => ({
+          ...prev,
+          password: "",
+          confirmPassword: ""
+        }));
+      }
     } catch (err) {
       setError(err.message || "Unable to create account. Please try again.");
     } finally {
@@ -187,6 +217,11 @@ export default function Signup() {
             {error && (
               <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
                 {error}
+              </div>
+            )}
+            {!error && successMessage && (
+              <div className="rounded-md bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-800">
+                {successMessage}
               </div>
             )}
 
