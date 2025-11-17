@@ -18,6 +18,10 @@ import PlayerRoster from "./PlayerRoster";
 
 import CoachProfile from "./CoachProfile";
 
+import Login from "./Login";
+
+import Signup from "./Signup";
+
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 
 const PAGES = {
@@ -39,6 +43,10 @@ const PAGES = {
     PlayerRoster: PlayerRoster,
     
     CoachProfile: CoachProfile,
+    
+    Login: Login,
+    
+    Signup: Signup,
     
 }
 
@@ -67,6 +75,12 @@ function PagesContent() {
                     <Route path="/" element={<LandingPage />} />
                 
                 
+                <Route path="/LandingPage" element={<LandingPage />} />
+                
+                <Route path="/Login" element={<Login />} />
+                
+                <Route path="/Signup" element={<Signup />} />
+                
                 <Route path="/Dashboard" element={<Dashboard />} />
                 
                 <Route path="/Events" element={<Events />} />
@@ -76,8 +90,6 @@ function PagesContent() {
                 <Route path="/Lineups" element={<Lineups />} />
                 
                 <Route path="/TeamSettings" element={<TeamSettings />} />
-                
-                <Route path="/LandingPage" element={<LandingPage />} />
                 
                 <Route path="/Profile" element={<Profile />} />
                 

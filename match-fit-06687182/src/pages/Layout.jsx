@@ -66,9 +66,11 @@ function LayoutContent({ children, currentPageName }) {
     );
   }
 
-  // If loading is complete, it's not the landing page, and there's no current user,
+  const authFreePages = ["LandingPage", "Login", "Signup"];
+
+  // If loading is complete, it's not an auth-free page, and there's no current user,
   // the useEffect above will handle the redirect. Don't render anything here.
-  if (!currentUser && !isLoadingUser && currentPageName !== "LandingPage") {
+  if (!currentUser && !isLoadingUser && !authFreePages.includes(currentPageName)) {
     return null;
   }
 
@@ -76,7 +78,7 @@ function LayoutContent({ children, currentPageName }) {
   const isOnboarding = currentPageName === "Dashboard" && currentUser && (!currentUser.team_role || !currentUser.team_id);
 
   // If landing page or onboarding, render without layout
-  if (currentPageName === "LandingPage" || isOnboarding) {
+  if (authFreePages.includes(currentPageName) || isOnboarding) {
     return (
       <>
         {globalStyles}

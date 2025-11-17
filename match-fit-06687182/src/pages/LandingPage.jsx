@@ -32,15 +32,11 @@ export default function LandingPage() {
   };
 
   const handleLogin = () => {
-    // TODO: Replace with your authentication system
-    // For now, navigate to Dashboard to allow exploring the app
-    navigate(createPageUrl("Dashboard"));
+    navigate(createPageUrl("Login"));
   };
 
   const handleSignUp = () => {
-    // TODO: Replace with your authentication system
-    // For now, navigate to Dashboard to allow exploring the app
-    navigate(createPageUrl("Dashboard"));
+    navigate(createPageUrl("Signup"));
   };
 
   if (isCheckingAuth) {

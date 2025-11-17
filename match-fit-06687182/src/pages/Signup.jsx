@@ -1,0 +1,218 @@
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { createPageUrl } from "@/utils";
+import { ArrowRight } from "lucide-react";
+
+const LOGO_FULL =
+  "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68c332f7b5426ee106687182/32285dc04_MatchFitLogo.png";
+
+const LOGO_ICON =
+  "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68c332f7b5426ee106687182/b49de559c_MatchFitSmallLogo.png";
+
+export default function Signup() {
+  const navigate = useNavigate();
+  const [formState, setFormState] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    role: "coach",
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setFormState((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    if (!formState.fullName || !formState.email || !formState.password) {
+      setError("Please complete all required fields.");
+      return;
+    }
+
+    if (formState.password.length < 6) {
+      setError("Password must be at least 6 characters long.");
+      return;
+    }
+
+    if (formState.password !== formState.confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    setError("");
+    setIsSubmitting(true);
+
+    try {
+      // TODO: Replace with your signup call
+      console.log("Signup attempt", formState);
+      navigate(createPageUrl("Dashboard"));
+    } catch (err) {
+      setError(err.message || "Unable to create account. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex flex-col lg:flex-row">
+      <div className="hidden lg:flex w-full lg:w-1/2 bg-[var(--primary-dark,#0c5798)] text-white p-12 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle,rgba(255,255,255,0.35),transparent_70%)]" />
+        <div className="relative z-10 flex flex-col items-center justify-center text-center w-full gap-6">
+          <div className="h-16 w-16 rounded-full bg-white flex items-center justify-center shadow-lg shadow-black/20">
+            <img src={LOGO_ICON} alt="MatchFit badge" className="h-9 w-9" />
+          </div>
+          <span className="text-4xl font-semibold tracking-wide">MatchFit</span>
+          <p className="text-blue-100 max-w-md">
+            Build smarter routines and keep your team informed with ease.
+          </p>
+        </div>
+      </div>
+
+      <div className="w-full lg:w-1/2 px-6 sm:px-10 lg:px-16 py-10 flex flex-col">
+        <div className="mb-8">
+          <Link to={createPageUrl("LandingPage")} className="inline-flex">
+            <img src={LOGO_FULL} alt="MatchFit Logo" className="h-12 w-auto" />
+          </Link>
+        </div>
+
+        <div className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full">
+          <div className="mb-8">
+            <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">Get Started</p>
+            <h1 className="text-3xl font-bold text-gray-900 mt-2">Create your MatchFit account</h1>
+            <p className="text-gray-600 mt-4">It only takes a couple of minutes to set up your team workspace.</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
+                Full Name
+              </label>
+              <Input
+                id="fullName"
+                name="fullName"
+                type="text"
+                placeholder="Alex Morgan"
+                value={formState.fullName}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                className="bg-white"
+                required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                Email Address
+              </label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="you@matchfit.com"
+                value={formState.email}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                className="bg-white"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                  Password
+                </label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  placeholder="Create a password"
+                  value={formState.password}
+                  onChange={handleChange}
+                  disabled={isSubmitting}
+                  className="bg-white"
+                  required
+                  minLength={6}
+                />
+              </div>
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+                  Confirm Password
+                </label>
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  placeholder="Repeat password"
+                  value={formState.confirmPassword}
+                  onChange={handleChange}
+                  disabled={isSubmitting}
+                  className="bg-white"
+                  required
+                  minLength={6}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">I am a...</label>
+              <div className="flex gap-3">
+                {[
+                  { label: "Coach", value: "coach" },
+                  { label: "Player", value: "player" },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setFormState((prev) => ({ ...prev, role: option.value }))}
+                    className={`flex-1 rounded-xl border px-4 py-3 text-sm font-semibold transition ${
+                      formState.role === option.value
+                        ? "bg-[var(--primary-main)] text-white border-transparent"
+                        : "bg-white text-gray-700 border-gray-200 hover:border-[var(--primary-main)]"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {error && (
+              <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+                {error}
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full bg-[var(--primary-main)] hover:bg-[var(--primary-dark)] text-white py-6 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all"
+            >
+              {isSubmitting ? "Creating account..." : "Create Account"}
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </form>
+
+          <div className="mt-6 text-center text-sm text-gray-600">
+            Already have an account?{" "}
+            <Link to={createPageUrl("Login")} className="text-blue-600 font-semibold hover:text-blue-700">
+              Log in
+            </Link>
+          </div>
+        </div>
+
+        <div className="mt-12 text-xs text-gray-400 text-center">
+          © {new Date().getFullYear()} MatchFit. All rights reserved.
+        </div>
+      </div>
+    </div>
+  );
+}
+
