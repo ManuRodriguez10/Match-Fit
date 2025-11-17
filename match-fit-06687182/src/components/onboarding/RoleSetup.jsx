@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/api/supabaseClient";
 import { createPageUrl } from "@/utils";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +30,7 @@ const COUNTRY_CODES = [
 ];
 
 export default function RoleSetup({ user, onComplete }) {
+  const navigate = useNavigate();
   const [selectedRole, setSelectedRole] = useState("");
   const [playerData, setPlayerData] = useState({
     first_name: "",
@@ -93,7 +95,8 @@ export default function RoleSetup({ user, onComplete }) {
 
   const handleLogout = async () => {
     try {
-      await base44.auth.logout(createPageUrl("LandingPage"));
+      await supabase.auth.signOut();
+      navigate(createPageUrl("LandingPage"));
     } catch (error) {
       console.error("Error logging out:", error);
     }
@@ -134,7 +137,16 @@ export default function RoleSetup({ user, onComplete }) {
         updateData.full_name = `${updateData.first_name} ${updateData.last_name}`;
       }
       
-      await base44.auth.updateMe(updateData);
+      // Update profile in Supabase
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update(updateData)
+        .eq('id', user.id);
+      
+      if (updateError) {
+        throw updateError;
+      }
+      
       onComplete();
     } catch (error) {
       console.error("Error updating user role:", error);

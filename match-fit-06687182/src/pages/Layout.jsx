@@ -57,7 +57,17 @@ function LayoutContent({ children, currentPageName }) {
       <>
         {globalStyles}
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="animate-pulse text-[var(--primary-main)]">Loading...</div>
+          <div className="text-center">
+            <div className="animate-pulse text-[var(--primary-main)] mb-4">Loading...</div>
+            <Button
+              variant="ghost"
+              onClick={handleLogout}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Logout
+            </Button>
+          </div>
         </div>
       </>
     );

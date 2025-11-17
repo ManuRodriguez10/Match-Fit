@@ -15,11 +15,9 @@ const LOGO_ICON =
 export default function Signup() {
   const navigate = useNavigate();
   const [formState, setFormState] = useState({
-    fullName: "",
     email: "",
     password: "",
     confirmPassword: "",
-    role: "coach",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -33,7 +31,7 @@ export default function Signup() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!formState.fullName || !formState.email || !formState.password) {
+    if (!formState.email || !formState.password) {
       setError("Please complete all required fields.");
       return;
     }
@@ -57,10 +55,6 @@ export default function Signup() {
         email: formState.email,
         password: formState.password,
         options: {
-          data: {
-            full_name: formState.fullName,
-            role: formState.role
-          },
           emailRedirectTo: `${window.location.origin}/login`
         }
       });
@@ -121,23 +115,6 @@ export default function Signup() {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
-                Full Name
-              </label>
-              <Input
-                id="fullName"
-                name="fullName"
-                type="text"
-                placeholder="Alex Morgan"
-                value={formState.fullName}
-                onChange={handleChange}
-                disabled={isSubmitting}
-                className="bg-white"
-                required
-              />
-            </div>
-
-            <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email Address
               </label>
@@ -188,29 +165,6 @@ export default function Signup() {
                   required
                   minLength={6}
                 />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">I am a...</label>
-              <div className="flex gap-3">
-                {[
-                  { label: "Coach", value: "coach" },
-                  { label: "Player", value: "player" },
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => setFormState((prev) => ({ ...prev, role: option.value }))}
-                    className={`flex-1 rounded-xl border px-4 py-3 text-sm font-semibold transition ${
-                      formState.role === option.value
-                        ? "bg-[var(--primary-main)] text-white border-transparent"
-                        : "bg-white text-gray-700 border-gray-200 hover:border-[var(--primary-main)]"
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
               </div>
             </div>
 
