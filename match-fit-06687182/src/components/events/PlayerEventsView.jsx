@@ -19,10 +19,12 @@ export default function PlayerEventsView({ user }) {
         base44.entities.Event.filter({ team_id: user.team_id }, "-date"),
         base44.entities.Lineup.filter({ team_id: user.team_id, published: true })
       ]);
-      setEvents(eventData);
-      setLineups(lineupData);
+      setEvents(eventData || []);
+      setLineups(lineupData || []);
     } catch (error) {
       console.error("Error loading data:", error);
+      setEvents([]);
+      setLineups([]);
     }
   }, [user.team_id]);
 

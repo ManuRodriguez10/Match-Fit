@@ -21,9 +21,10 @@ export default function CoachEventsView({ user }) {
   const loadEvents = async () => {
     try {
       const eventData = await base44.entities.Event.filter({ team_id: user.team_id }, "-date");
-      setEvents(eventData);
+      setEvents(eventData || []);
     } catch (error) {
       console.error("Error loading events:", error);
+      setEvents([]);
     }
   };
 

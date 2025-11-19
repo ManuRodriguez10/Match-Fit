@@ -1,6 +1,6 @@
-
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { useUser } from "../components/UserContext";
+import { supabase } from "@/api/supabaseClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
 export default function TeamSettingsPage() {
-  const [currentUser, setCurrentUser] = useState(null);
+  const { currentUser, isLoadingUser } = useUser();
   const [team, setTeam] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -26,25 +26,34 @@ export default function TeamSettingsPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (currentUser) {
+      loadTeamData();
+    }
+  }, [currentUser]);
 
-  const loadData = async () => {
+  const loadTeamData = async () => {
+    if (!currentUser?.team_id) {
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const user = await base44.auth.me();
-      setCurrentUser(user);
+      const { data: teamData, error } = await supabase
+        .from('teams')
+        .select('*')
+        .eq('id', currentUser.team_id)
+        .single();
 
-      if (user.team_id) {
-        const teams = await base44.entities.Team.filter({ id: user.team_id });
-        if (teams.length > 0) {
-          const teamData = teams[0];
-          setTeam(teamData);
-          setTeamData({
-            name: teamData.name || "",
-            description: teamData.description || ""
-          });
-        }
+      if (error) {
+        console.error("Error loading team:", error);
+        toast.error("Failed to load team data");
+      } else {
+        setTeam(teamData);
+        setTeamData({
+          name: teamData.name || "",
+          description: teamData.description || ""
+        });
       }
     } catch (error) {
       console.error("Error loading team data:", error);
@@ -58,7 +67,15 @@ export default function TeamSettingsPage() {
     setIsSaving(true);
     
     try {
-      await base44.entities.Team.update(team.id, teamData);
+      const { error } = await supabase
+        .from('teams')
+        .update(teamData)
+        .eq('id', team.id);
+
+      if (error) {
+        throw error;
+      }
+
       setTeam({ ...team, ...teamData });
       toast.success("Team settings saved successfully!");
     } catch (error) {
@@ -83,16 +100,17 @@ export default function TeamSettingsPage() {
     setIsDeleting(true);
     
     try {
-      const response = await base44.functions.invoke('deleteTeam', { team_id: team.id });
+      // TODO: Implement team deletion with Supabase
+      // For now, we'll just show an error since this requires cascading deletes
+      // and proper cleanup of related data
+      toast.error("Team deletion is not yet implemented. Please contact support.");
+      setIsDeleting(false);
       
-      if (response.data.success) {
-        toast.success("Team deleted successfully");
-        
-        // Redirect to landing page
-        window.location.href = createPageUrl("LandingPage");
-      } else {
-        throw new Error(response.data.error || 'Failed to delete team');
-      }
+      // Future implementation:
+      // 1. Delete all related events, lineups, etc.
+      // 2. Update all profiles to remove team_id
+      // 3. Delete the team record
+      // const { error } = await supabase.from('teams').delete().eq('id', team.id);
     } catch (error) {
       console.error("Error deleting team:", error);
       toast.error("Failed to delete team. Please try again.");
@@ -111,17 +129,17 @@ export default function TeamSettingsPage() {
     setIsGeneratingCode(true);
     
     try {
-      const response = await base44.functions.invoke('generateCoachCode');
+      // TODO: Implement coach code generation with Supabase
+      // This would require creating a coach_invitations table or similar
+      toast.error("Coach invitation code generation is not yet implemented.");
+      setIsGeneratingCode(false);
       
-      if (response.data.success) {
-        setGeneratedCode(response.data.invitation_code);
-        toast.success("Coach invitation code generated!");
-      } else {
-        throw new Error(response.data.error || 'Failed to generate code');
-      }
+      // Future implementation:
+      // Generate a unique code, store it in a coach_invitations table
+      // with expiration date and one-time use flag
     } catch (error) {
       console.error("Error generating coach code:", error);
-      toast.error(error.response?.data?.error || error.message || "Failed to generate code");
+      toast.error("Failed to generate code");
     }
     
     setIsGeneratingCode(false);
@@ -134,12 +152,22 @@ export default function TeamSettingsPage() {
     }
   };
 
-  if (isLoading) {
+  if (isLoadingUser || isLoading) {
     return (
       <div className="p-6">
         <div className="animate-pulse space-y-6">
           <div className="h-8 bg-gray-200 rounded w-1/4"></div>
           <div className="h-64 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return (
+      <div className="p-6">
+        <div className="text-center py-12">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Please log in</h3>
         </div>
       </div>
     );

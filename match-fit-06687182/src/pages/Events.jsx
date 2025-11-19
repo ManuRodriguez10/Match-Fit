@@ -1,28 +1,12 @@
-import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import React from "react";
+import { useUser } from "../components/UserContext";
 import CoachEventsView from "../components/events/CoachEventsView";
 import PlayerEventsView from "../components/events/PlayerEventsView";
 
 export default function EventsPage() {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { currentUser, isLoadingUser } = useUser();
 
-  useEffect(() => {
-    loadCurrentUser();
-  }, []);
-
-  const loadCurrentUser = async () => {
-    setIsLoading(true);
-    try {
-      const user = await base44.auth.me();
-      setCurrentUser(user);
-    } catch (error) {
-      console.error("Error loading user:", error);
-    }
-    setIsLoading(false);
-  };
-
-  if (isLoading) {
+  if (isLoadingUser) {
     return (
       <div className="p-6">
         <div className="animate-pulse space-y-6">
@@ -33,9 +17,19 @@ export default function EventsPage() {
     );
   }
 
+  if (!currentUser) {
+    return (
+      <div className="p-6">
+        <div className="text-center py-12">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Please log in</h3>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6">
-      {currentUser?.team_role === "coach" ? (
+      {currentUser.team_role === "coach" ? (
         <CoachEventsView user={currentUser} />
       ) : (
         <PlayerEventsView user={currentUser} />

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { useUser } from "../components/UserContext";
+import { supabase } from "@/api/supabaseClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, Shield, Target, Zap, TrendingUp } from "lucide-react";
@@ -14,24 +15,37 @@ const parseLocalDate = (dateString) => {
 };
 
 export default function RosterPage() {
-  const [currentUser, setCurrentUser] = useState(null);
+  const { currentUser, isLoadingUser } = useUser();
   const [teamMembers, setTeamMembers] = useState([]);
   const [selectedMember, setSelectedMember] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (currentUser) {
+      loadTeamMembers();
+    }
+  }, [currentUser]);
 
-  const loadData = async () => {
+  const loadTeamMembers = async () => {
+    if (!currentUser?.team_id) {
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const user = await base44.auth.me();
-      setCurrentUser(user);
+      // Fetch team members from profiles table
+      const { data: members, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('team_id', currentUser.team_id)
+        .order('team_role', { ascending: false })
+        .order('last_name');
 
-      if (user.team_id) {
-        const response = await base44.functions.invoke('getTeamMembers');
-        setTeamMembers(response.data.teamMembers);
+      if (error) {
+        console.error("Error loading team members:", error);
+      } else {
+        setTeamMembers(members || []);
       }
     } catch (error) {
       console.error("Error loading roster data:", error);
@@ -39,7 +53,7 @@ export default function RosterPage() {
     setIsLoading(false);
   };
 
-  if (isLoading) {
+  if (isLoadingUser || isLoading) {
     return (
       <div className="p-6">
         <div className="animate-pulse space-y-6">
@@ -197,7 +211,7 @@ export default function RosterPage() {
           member={selectedMember}
           currentUser={currentUser}
           onClose={() => setSelectedMember(null)}
-          onPlayerRemoved={loadData}
+          onPlayerRemoved={loadTeamMembers}
         />
       )}
 
