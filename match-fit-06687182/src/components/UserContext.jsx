@@ -101,11 +101,28 @@ export const UserProvider = ({ children }) => {
           // Fallback to user_metadata if profile doesn't exist yet
           full_name: profileData?.full_name || authData.user.user_metadata?.full_name || authData.user.email,
           role: profileData?.role || authData.user.user_metadata?.role || null,
-          team_role: profileData?.team_role || authData.user.user_metadata?.role || null,
+          team_role: profileData?.team_role || authData.user.user_metadata?.team_role || null,
           team_id: profileData?.team_id || null,
           jersey_number: profileData?.jersey_number || null,
           position: profileData?.position || null
         };
+        
+        // If profile exists but team_role is missing, and user_metadata has it, update the profile
+        if (profileData && !profileData.team_role && authData.user.user_metadata?.team_role) {
+          // Silently update the profile in the background
+          supabase
+            .from('profiles')
+            .update({ team_role: authData.user.user_metadata.team_role })
+            .eq('id', authData.user.id)
+            .then(({ error }) => {
+              if (error) {
+                console.error("Error syncing team_role to profile:", error);
+              } else {
+                // Reload user to get updated profile
+                loadCurrentUser();
+              }
+            });
+        }
         
         setCurrentUser(normalizeUser(user));
       } else {
@@ -203,11 +220,28 @@ export const UserProvider = ({ children }) => {
               ...(profileData || {}),
               full_name: profileData?.full_name || session.user.user_metadata?.full_name || session.user.email,
               role: profileData?.role || session.user.user_metadata?.role || null,
-              team_role: profileData?.team_role || session.user.user_metadata?.role || null,
+              team_role: profileData?.team_role || session.user.user_metadata?.team_role || null,
               team_id: profileData?.team_id || null,
               jersey_number: profileData?.jersey_number || null,
               position: profileData?.position || null
             };
+            
+            // If profile exists but team_role is missing, and user_metadata has it, update the profile
+            if (profileData && !profileData.team_role && session.user.user_metadata?.team_role) {
+              // Silently update the profile in the background
+              supabase
+                .from('profiles')
+                .update({ team_role: session.user.user_metadata.team_role })
+                .eq('id', session.user.id)
+                .then(({ error }) => {
+                  if (error) {
+                    console.error("Error syncing team_role to profile:", error);
+                  } else {
+                    // Reload user to get updated profile
+                    loadCurrentUser();
+                  }
+                });
+            }
             
             setCurrentUser(normalizeUser(user));
           } else {

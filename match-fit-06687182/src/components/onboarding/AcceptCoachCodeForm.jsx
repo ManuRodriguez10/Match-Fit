@@ -1,21 +1,23 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/api/supabaseClient";
 import { createPageUrl } from "@/utils";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, AlertCircle, LogOut } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ArrowLeft, LogOut } from "lucide-react";
 
 export default function AcceptCoachCodeForm({ user, onComplete, onBack }) {
+  const navigate = useNavigate();
   const [invitationCode, setInvitationCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
   const handleLogout = async () => {
     try {
-      await base44.auth.logout(createPageUrl("LandingPage"));
+      await supabase.auth.signOut();
+      navigate(createPageUrl("LandingPage"));
     } catch (error) {
       console.error("Error logging out:", error);
     }
@@ -25,45 +27,49 @@ export default function AcceptCoachCodeForm({ user, onComplete, onBack }) {
     e.preventDefault();
     setIsSubmitting(true);
     setError("");
-    
+
     try {
-      // Find invitation by code
-      const invitations = await base44.entities.CoachInvitation.filter({ 
-        invitation_token: invitationCode.toUpperCase(),
-        status: 'pending'
-      });
-      
-      if (invitations.length === 0) {
-        setError("Invalid or expired invitation code. Please check the code and try again.");
+      const {
+        data: { user: authUser },
+        error: authError
+      } = await supabase.auth.getUser();
+      if (authError || !authUser) {
+        throw new Error("User not authenticated");
+      }
+
+      if (user.team_id) {
+        setError("You're already part of a team. Please leave that team first.");
         setIsSubmitting(false);
         return;
       }
-      
-      const invitation = invitations[0];
-      
-      // Check if invitation is expired
-      if (new Date(invitation.expires_at) < new Date()) {
-        setError("This invitation code has expired. Please request a new code from your head coach.");
-        await base44.entities.CoachInvitation.update(invitation.id, { status: 'expired' });
+
+      const { data: teams, error: teamError } = await supabase
+        .from("teams")
+        .select("*")
+        .eq("join_code", invitationCode.toUpperCase())
+        .limit(1);
+
+      if (teamError) {
+        throw teamError;
+      }
+
+      if (!teams || teams.length === 0) {
+        setError("Invalid invitation code. Please check the code and try again.");
         setIsSubmitting(false);
         return;
       }
-      
-      // Check if user already has a team
-      if (user.team_id && user.team_id !== invitation.team_id) {
-        setError("You're already part of another team. Please leave that team first.");
-        setIsSubmitting(false);
-        return;
+
+      const team = teams[0];
+
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ team_id: team.id })
+        .eq("id", authUser.id);
+
+      if (profileError) {
+        throw profileError;
       }
-      
-      // Accept the invitation - update user with team_id
-      await base44.auth.updateMe({
-        team_id: invitation.team_id
-      });
-      
-      // Mark invitation as accepted
-      await base44.entities.CoachInvitation.update(invitation.id, { status: 'accepted' });
-      
+
       onComplete();
     } catch (error) {
       console.error("Error accepting invitation:", error);
@@ -77,48 +83,42 @@ export default function AcceptCoachCodeForm({ user, onComplete, onBack }) {
       <div className="w-full max-w-md">
         <Card>
           <CardHeader>
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={onBack}
-              className="mb-2"
-            >
+            <Button variant="ghost" size="icon" onClick={onBack} className="mb-2">
               <ArrowLeft className="w-4 h-4" />
             </Button>
-            <CardTitle>Join Coaching Staff</CardTitle>
+            <CardTitle>Join Existing Team</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {error && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-
               <div className="space-y-2">
-                <Label htmlFor="invitationCode">Invitation Code *</Label>
+                <Label htmlFor="invitationCode">Team Code *</Label>
                 <Input
                   id="invitationCode"
                   value={invitationCode}
                   onChange={(e) => setInvitationCode(e.target.value.toUpperCase())}
-                  placeholder="Enter 8-character code"
-                  maxLength={8}
+                  placeholder="Enter 6-character code"
+                  maxLength={6}
                   required
                   className="text-center text-2xl tracking-wider font-bold"
                 />
                 <p className="text-sm text-gray-500">
-                  Your head coach should have provided you with this one-time code
+                  Your head coach should have provided you with this team code
                 </p>
               </div>
+
+              {error && (
+                <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+                  {error}
+                </div>
+              )}
 
               <div className="flex gap-3">
                 <Button type="button" variant="outline" onClick={onBack} className="flex-1">
                   Back
                 </Button>
-                <Button 
-                  type="submit" 
-                  disabled={isSubmitting || invitationCode.length !== 8}
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
                   className="flex-1 bg-[var(--primary-main)] hover:bg-[var(--primary-dark)]"
                 >
                   {isSubmitting ? "Joining..." : "Join Team"}
@@ -128,7 +128,6 @@ export default function AcceptCoachCodeForm({ user, onComplete, onBack }) {
           </CardContent>
         </Card>
 
-        {/* Logout Button - Centered at Bottom */}
         <div className="mt-6 text-center">
           <Button
             variant="ghost"

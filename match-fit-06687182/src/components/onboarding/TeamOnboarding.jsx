@@ -2,20 +2,23 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, Plus, LogIn, ArrowLeft, LogOut } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/api/supabaseClient";
 import { createPageUrl } from "@/utils";
+import { useNavigate } from "react-router-dom";
 import CreateTeamForm from "./CreateTeamForm";
 import JoinTeamForm from "./JoinTeamForm";
 import AcceptCoachCodeForm from "./AcceptCoachCodeForm";
 
 export default function TeamOnboarding({ user, onComplete, onBackToRoleSelection }) {
   const [view, setView] = useState("choice"); // "choice", "create", "join", "acceptCoachCode"
+  const navigate = useNavigate();
   
   const isCoach = user.team_role === "coach";
 
   const handleLogout = async () => {
     try {
-      await base44.auth.logout(createPageUrl("LandingPage"));
+      await supabase.auth.signOut();
+      navigate(createPageUrl("LandingPage"));
     } catch (error) {
       console.error("Error logging out:", error);
     }

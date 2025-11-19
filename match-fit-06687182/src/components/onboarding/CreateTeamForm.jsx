@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/api/supabaseClient";
 import { createPageUrl } from "@/utils";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,7 @@ import { ArrowLeft, Copy, CheckCircle, LogOut } from "lucide-react";
 import { toast } from "sonner";
 
 export default function CreateTeamForm({ user, onComplete, onBack }) {
+  const navigate = useNavigate();
   const [teamData, setTeamData] = useState({
     name: "",
     description: ""
@@ -19,15 +21,16 @@ export default function CreateTeamForm({ user, onComplete, onBack }) {
 
   const handleLogout = async () => {
     try {
-      await base44.auth.logout(createPageUrl("LandingPage"));
+      await supabase.auth.signOut();
+      navigate(createPageUrl("LandingPage"));
     } catch (error) {
       console.error("Error logging out:", error);
     }
   };
 
   const generateJoinCode = () => {
-    const characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    let code = '';
+    const characters = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let code = "";
     for (let i = 0; i < 6; i++) {
       code += characters.charAt(Math.floor(Math.random() * characters.length));
     }
@@ -37,21 +40,43 @@ export default function CreateTeamForm({ user, onComplete, onBack }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
+      const {
+        data: { user: authUser },
+        error: authError
+      } = await supabase.auth.getUser();
+      if (authError || !authUser) {
+        throw new Error("User not authenticated");
+      }
+
       const joinCode = generateJoinCode();
-      
-      const team = await base44.entities.Team.create({
-        ...teamData,
-        sport: "soccer",
-        join_code: joinCode,
-        created_by: user.email
-      });
-      
-      await base44.auth.updateMe({
-        team_id: team.id
-      });
-      
+
+      const { data: team, error: teamError } = await supabase
+        .from("teams")
+        .insert({
+          name: teamData.name,
+          description: teamData.description || null,
+          sport: "soccer",
+          join_code: joinCode,
+          created_by: authUser.email
+        })
+        .select()
+        .single();
+
+      if (teamError) {
+        throw teamError;
+      }
+
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ team_id: team.id })
+        .eq("id", authUser.id);
+
+      if (profileError) {
+        throw profileError;
+      }
+
       setCreatedTeam(team);
     } catch (error) {
       console.error("Error creating team:", error);
@@ -85,11 +110,7 @@ export default function CreateTeamForm({ user, onComplete, onBack }) {
                   <p className="text-4xl font-bold text-[var(--primary-main)] tracking-wider mb-3">
                     {createdTeam.join_code}
                   </p>
-                  <Button 
-                    variant="outline" 
-                    onClick={copyJoinCode}
-                    className="w-full"
-                  >
+                  <Button variant="outline" onClick={copyJoinCode} className="w-full">
                     <Copy className="w-4 h-4 mr-2" />
                     Copy Team Code
                   </Button>
@@ -98,8 +119,8 @@ export default function CreateTeamForm({ user, onComplete, onBack }) {
                   Players will need this code to join your team. You can find it later in your team settings.
                 </p>
               </div>
-              
-              <Button 
+
+              <Button
                 onClick={onComplete}
                 className="w-full bg-[var(--primary-main)] hover:bg-[var(--primary-dark)]"
               >
@@ -108,7 +129,6 @@ export default function CreateTeamForm({ user, onComplete, onBack }) {
             </CardContent>
           </Card>
 
-          {/* Logout Button - Centered at Bottom */}
           <div className="mt-6 text-center">
             <Button
               variant="ghost"
@@ -129,12 +149,7 @@ export default function CreateTeamForm({ user, onComplete, onBack }) {
       <div className="w-full max-w-md">
         <Card>
           <CardHeader>
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={onBack}
-              className="mb-2"
-            >
+            <Button variant="ghost" size="icon" onClick={onBack} className="mb-2">
               <ArrowLeft className="w-4 h-4" />
             </Button>
             <CardTitle>Create Your Team</CardTitle>
@@ -146,7 +161,7 @@ export default function CreateTeamForm({ user, onComplete, onBack }) {
                 <Input
                   id="name"
                   value={teamData.name}
-                  onChange={(e) => setTeamData(prev => ({ ...prev, name: e.target.value }))}
+                  onChange={(e) => setTeamData((prev) => ({ ...prev, name: e.target.value }))}
                   placeholder="e.g., Thunder Hawks"
                   required
                 />
@@ -157,7 +172,7 @@ export default function CreateTeamForm({ user, onComplete, onBack }) {
                 <Textarea
                   id="description"
                   value={teamData.description}
-                  onChange={(e) => setTeamData(prev => ({ ...prev, description: e.target.value }))}
+                  onChange={(e) => setTeamData((prev) => ({ ...prev, description: e.target.value }))}
                   placeholder="Tell us about your team..."
                   rows={3}
                 />
@@ -167,8 +182,8 @@ export default function CreateTeamForm({ user, onComplete, onBack }) {
                 <Button type="button" variant="outline" onClick={onBack} className="flex-1">
                   Back
                 </Button>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={isSubmitting}
                   className="flex-1 bg-[var(--primary-main)] hover:bg-[var(--primary-dark)]"
                 >
@@ -179,7 +194,6 @@ export default function CreateTeamForm({ user, onComplete, onBack }) {
           </CardContent>
         </Card>
 
-        {/* Logout Button - Centered at Bottom */}
         <div className="mt-6 text-center">
           <Button
             variant="ghost"

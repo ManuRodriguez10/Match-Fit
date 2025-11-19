@@ -18,6 +18,7 @@ export default function Signup() {
     email: "",
     password: "",
     confirmPassword: "",
+    role: "", // 'coach' or 'player'
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -31,7 +32,7 @@ export default function Signup() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!formState.email || !formState.password) {
+    if (!formState.email || !formState.password || !formState.role) {
       setError("Please complete all required fields.");
       return;
     }
@@ -55,7 +56,10 @@ export default function Signup() {
         email: formState.email,
         password: formState.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/login`
+          emailRedirectTo: `${window.location.origin}/login`,
+          data: {
+            team_role: formState.role // Store in user_metadata for immediate access
+          }
         }
       });
 
@@ -64,8 +68,19 @@ export default function Signup() {
       }
 
       // Profile is automatically created by database trigger
-      // If we need to update it with additional data, we can do that here
-      // The trigger will create the profile from user_metadata
+      // Update it with the selected role
+      if (data?.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ team_role: formState.role })
+          .eq('id', data.user.id);
+
+        if (profileError) {
+          console.error("Error updating profile:", profileError);
+          // Don't throw - profile was created, just role update failed
+          // The role is also stored in user_metadata as fallback
+        }
+      }
 
       if (data?.session) {
         navigate(createPageUrl("Dashboard"));
@@ -165,6 +180,44 @@ export default function Signup() {
                   required
                   minLength={6}
                 />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                I am a... *
+              </label>
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() => setFormState((prev) => ({ ...prev, role: "coach" }))}
+                  disabled={isSubmitting}
+                  className={`p-4 rounded-lg border-2 transition-all ${
+                    formState.role === "coach"
+                      ? "border-[var(--primary-main)] bg-blue-50"
+                      : "border-gray-200 hover:border-gray-300 bg-white"
+                  } ${isSubmitting ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                >
+                  <div className="text-center">
+                    <div className="text-lg font-semibold text-gray-900">Coach</div>
+                    <div className="text-sm text-gray-500 mt-1">Manage teams and players</div>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormState((prev) => ({ ...prev, role: "player" }))}
+                  disabled={isSubmitting}
+                  className={`p-4 rounded-lg border-2 transition-all ${
+                    formState.role === "player"
+                      ? "border-[var(--primary-main)] bg-blue-50"
+                      : "border-gray-200 hover:border-gray-300 bg-white"
+                  } ${isSubmitting ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                >
+                  <div className="text-center">
+                    <div className="text-lg font-semibold text-gray-900">Player</div>
+                    <div className="text-sm text-gray-500 mt-1">Join teams and view schedules</div>
+                  </div>
+                </button>
               </div>
             </div>
 
