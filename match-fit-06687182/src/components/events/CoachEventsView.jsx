@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { useLocation } from "react-router-dom";
+import { supabase } from "@/api/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -7,48 +8,98 @@ import { Plus, Calendar, MapPin, Users } from "lucide-react";
 import { format, isFuture, isPast, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
 import EventForm from "./EventForm";
 import EventDetails from "./EventDetails";
+import { toast } from "sonner";
 
 export default function CoachEventsView({ user }) {
   const [events, setEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showEventForm, setShowEventForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const location = useLocation();
 
   useEffect(() => {
+    if (!user?.team_id) {
+      setEvents([]);
+      setIsLoading(false);
+      return;
+    }
     loadEvents();
-  }, []);
+  }, [user?.team_id]);
+
+  useEffect(() => {
+    setSelectedEvent(null);
+    setShowEventForm(false);
+    setEditingEvent(null);
+  }, [location.pathname]);
 
   const loadEvents = async () => {
+    setIsLoading(true);
     try {
-      const eventData = await base44.entities.Event.filter({ team_id: user.team_id }, "-date");
-      setEvents(eventData || []);
+      const { data, error } = await supabase
+        .from("events")
+        .select("*")
+        .eq("team_id", user.team_id)
+        .order("date", { ascending: true });
+
+      if (error) {
+        throw error;
+      }
+
+      setEvents(data || []);
     } catch (error) {
       console.error("Error loading events:", error);
+      toast.error("Unable to load events. Please try again.");
       setEvents([]);
     }
+    setIsLoading(false);
   };
 
   const handleCreateEvent = async (eventData) => {
     try {
-      await base44.entities.Event.create({
+      const payload = {
         ...eventData,
-        team_id: user.team_id
-      });
+        team_id: user.team_id,
+        created_by: user.id
+      };
+
+      const { error } = await supabase
+        .from("events")
+        .insert(payload);
+
+      if (error) {
+        throw error;
+      }
+
       setShowEventForm(false);
       loadEvents();
+      toast.success("Event created");
     } catch (error) {
       console.error("Error creating event:", error);
+      toast.error(error.message || "Failed to create event");
+      throw error;
     }
   };
 
   const handleEditEvent = async (eventData) => {
     try {
-      await base44.entities.Event.update(editingEvent.id, eventData);
+      const { error } = await supabase
+        .from("events")
+        .update(eventData)
+        .eq("id", editingEvent.id);
+
+      if (error) {
+        throw error;
+      }
+
       setEditingEvent(null);
       setShowEventForm(false);
       loadEvents();
+      toast.success("Event updated");
     } catch (error) {
       console.error("Error updating event:", error);
+      toast.error(error.message || "Failed to update event");
+      throw error;
     }
   };
 
@@ -58,12 +109,20 @@ export default function CoachEventsView({ user }) {
     }
     
     try {
-      await base44.entities.Event.delete(eventId);
+      const { error } = await supabase
+        .from("events")
+        .delete()
+        .eq("id", eventId);
+
+      if (error) {
+        throw error;
+      }
+
       setSelectedEvent(null);
       loadEvents();
     } catch (error) {
       console.error("Error deleting event:", error);
-      alert("There was an error deleting the event. Please try again.");
+      toast.error("There was an error deleting the event. Please try again.");
     }
   };
 
@@ -143,6 +202,28 @@ export default function CoachEventsView({ user }) {
   
   const upcomingEvents = events.filter(e => isFuture(new Date(e.date)));
   const pastEvents = events.filter(e => isPast(new Date(e.date)));
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Team Calendar</h1>
+            <p className="text-gray-600 mt-1">Schedule and manage team events</p>
+          </div>
+          <Button className="bg-[var(--primary-main)] hover:bg-[var(--primary-dark)]" disabled>
+            <Plus className="w-4 h-4 mr-2" />
+            New Event
+          </Button>
+        </div>
+        <Card>
+          <CardContent>
+            <p className="text-gray-500">Loading events...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

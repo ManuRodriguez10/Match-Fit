@@ -20,16 +20,29 @@ export default function EventForm({ event, onSubmit, onCancel }) {
     opponent: event?.opponent || "",
     required: event?.required ?? true
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setFormError("");
     
     // Check if the event date is in the past
     const eventDateTime = new Date(formData.date);
     const now = new Date();
+
+    if (Number.isNaN(eventDateTime.getTime())) {
+      const message = "Please select a valid date and time.";
+      setFormError(message);
+      toast.error(message);
+      return;
+    }
     
     if (eventDateTime < now) {
-      toast.error("Event date and time cannot be in the past.");
+      const message = "Event date and time cannot be in the past.";
+      setFormError(message);
+      toast.error(message);
       return;
     }
     
@@ -37,7 +50,16 @@ export default function EventForm({ event, onSubmit, onCancel }) {
       ...formData,
       date: eventDateTime.toISOString()
     };
-    onSubmit(eventData);
+    setIsSubmitting(true);
+    try {
+      await onSubmit(eventData);
+    } catch (error) {
+      const message = error?.message || "Unable to save event. Please try again.";
+      setFormError(message);
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleInputChange = (field, value) => {
@@ -142,9 +164,19 @@ export default function EventForm({ event, onSubmit, onCancel }) {
             </p>
           </div>
 
+          {formError && (
+            <p className="text-sm text-red-600">{formError}</p>
+          )}
+
           <div className="flex justify-end gap-4">
             <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
-            <Button type="submit" className="bg-[var(--primary-main)] hover:bg-[var(--primary-dark)]">{event ? "Save Changes" : "Create Event"}</Button>
+            <Button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="bg-[var(--primary-main)] hover:bg-[var(--primary-dark)]"
+            >
+              {isSubmitting ? "Saving..." : event ? "Save Changes" : "Create Event"}
+            </Button>
           </div>
         </form>
       </CardContent>

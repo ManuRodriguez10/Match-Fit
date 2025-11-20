@@ -30,6 +30,10 @@ function LayoutContent({ children, currentPageName }) {
     }
   }, [isLoadingUser, currentUser, currentPageName]);
 
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
+
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
@@ -52,7 +56,7 @@ function LayoutContent({ children, currentPageName }) {
   );
 
   // If still loading user data (except for landing page), show loading
-  if (isLoadingUser && currentPageName !== "LandingPage") {
+  if (isLoadingUser && !currentUser && currentPageName !== "LandingPage") {
     return (
       <>
         {globalStyles}
@@ -82,7 +86,13 @@ function LayoutContent({ children, currentPageName }) {
   // Check if user is in onboarding state (only after user is loaded)
   const userTeamRole = currentUser?.user_metadata?.team_role || currentUser?.team_role;
   const userTeamId = currentUser?.user_metadata?.team_id || currentUser?.team_id;
-  const displayName = currentUser?.user_metadata?.full_name || currentUser?.email || "User";
+  const resolvedName =
+    currentUser?.full_name ||
+    [currentUser?.first_name, currentUser?.last_name].filter(Boolean).join(" ") ||
+    currentUser?.user_metadata?.full_name ||
+    currentUser?.email ||
+    "User";
+  const resolvedInitial = resolvedName.trim().charAt(0)?.toUpperCase() || "U";
 
   const isOnboarding = currentPageName === "Dashboard" && currentUser && (!userTeamRole || !userTeamId);
 
@@ -233,13 +243,13 @@ function LayoutContent({ children, currentPageName }) {
                 <div className="flex-shrink-0">
                   <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
                     <span className="text-white font-medium">
-                      {currentUser.first_name?.charAt(0) || "U"}
+                      {resolvedInitial}
                     </span>
                   </div>
                 </div>
                 <div className="ml-3 flex-1 min-w-0">
                   <p className="text-sm font-medium text-white truncate">
-                    {currentUser.first_name} {currentUser.last_name}
+                    {resolvedName}
                   </p>
                 </div>
               </div>
@@ -297,13 +307,13 @@ function LayoutContent({ children, currentPageName }) {
                     <div className="flex-shrink-0">
                       <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
                         <span className="text-white font-medium text-sm">
-                          {currentUser.first_name?.charAt(0) || "U"}
+                          {resolvedInitial}
                         </span>
                       </div>
                     </div>
                     <div className="ml-3 flex-1 min-w-0">
                       <p className="text-sm font-medium text-white truncate">
-                        {currentUser.first_name} {currentUser.last_name}
+                        {resolvedName}
                       </p>
                     </div>
                   </div>

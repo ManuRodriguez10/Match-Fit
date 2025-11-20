@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Copy, Users, Save, Trash2, Mail, Key } from "lucide-react";
+import { Copy, Users, Save, Trash2, Key } from "lucide-react";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { formatDistanceToNow } from "date-fns";
 
 export default function TeamSettingsPage() {
   const { currentUser, isLoadingUser } = useUser();
@@ -22,7 +23,10 @@ export default function TeamSettingsPage() {
     description: ""
   });
   const [generatedCode, setGeneratedCode] = useState(null);
+  const [generatedCodeExpiry, setGeneratedCodeExpiry] = useState(null);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
+  const [isCopyingJoinCode, setIsCopyingJoinCode] = useState(false);
+  const [isCopyingCoachCode, setIsCopyingCoachCode] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -54,12 +58,68 @@ export default function TeamSettingsPage() {
           name: teamData.name || "",
           description: teamData.description || ""
         });
+        await loadActiveCoachInvite(teamData.id);
       }
     } catch (error) {
       console.error("Error loading team data:", error);
       toast.error("Failed to load team data");
     }
     setIsLoading(false);
+  };
+
+  const loadActiveCoachInvite = async (teamId) => {
+    try {
+      const { data, error } = await supabase
+        .from("coach_invites")
+        .select("*")
+        .eq("team_id", teamId)
+        .eq("used", false)
+        .gt("expires_at", new Date().toISOString())
+        .order("expires_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        setGeneratedCode(null);
+        setGeneratedCodeExpiry(null);
+        return;
+      }
+
+      if (data) {
+        setGeneratedCode(data.code);
+        setGeneratedCodeExpiry(data.expires_at);
+      } else {
+        setGeneratedCode(null);
+        setGeneratedCodeExpiry(null);
+      }
+    } catch (error) {
+      console.warn("Coach invite lookup failed:", error.message);
+      setGeneratedCode(null);
+      setGeneratedCodeExpiry(null);
+    }
+  };
+
+  const copyTextToClipboard = async (value, successMessage) => {
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(value);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = value;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+      toast.success(successMessage);
+    } catch (error) {
+      console.error("Clipboard error:", error);
+      toast.error("Unable to copy to clipboard. Please try again.");
+      throw error;
+    }
   };
 
   const handleSave = async (e) => {
@@ -100,55 +160,104 @@ export default function TeamSettingsPage() {
     setIsDeleting(true);
     
     try {
-      // TODO: Implement team deletion with Supabase
-      // For now, we'll just show an error since this requires cascading deletes
-      // and proper cleanup of related data
-      toast.error("Team deletion is not yet implemented. Please contact support.");
-      setIsDeleting(false);
-      
-      // Future implementation:
-      // 1. Delete all related events, lineups, etc.
-      // 2. Update all profiles to remove team_id
-      // 3. Delete the team record
-      // const { error } = await supabase.from('teams').delete().eq('id', team.id);
+      const teamId = team.id;
+
+      const cleanupResults = await Promise.all([
+        supabase.from("profiles").update({ team_id: null, team_role: null }).eq("team_id", teamId),
+        supabase.from("events").delete().eq("team_id", teamId),
+        supabase.from("lineups").delete().eq("team_id", teamId),
+        supabase.from("coach_invites").delete().eq("team_id", teamId)
+      ]);
+
+      const cleanupError = cleanupResults.find((result) => result.error)?.error;
+      if (cleanupError) {
+        throw cleanupError;
+      }
+
+      const { error: deleteTeamError } = await supabase.from('teams').delete().eq('id', teamId);
+      if (deleteTeamError) {
+        throw deleteTeamError;
+      }
+
+      toast.success("Team deleted successfully.");
+      navigate(createPageUrl("Dashboard"), { replace: true });
     } catch (error) {
       console.error("Error deleting team:", error);
-      toast.error("Failed to delete team. Please try again.");
+      toast.error(error.message || "Failed to delete team. Please try again.");
       setIsDeleting(false);
+      return;
     }
+
+    setIsDeleting(false);
   };
 
-  const copyJoinCode = () => {
-    if (team?.join_code) {
-      navigator.clipboard.writeText(team.join_code);
-      toast.success("Team code copied to clipboard!");
+  const copyJoinCode = async () => {
+    if (!team?.join_code || isCopyingJoinCode) return;
+    setIsCopyingJoinCode(true);
+    try {
+      await copyTextToClipboard(team.join_code, "Team code copied to clipboard!");
+    } finally {
+      setIsCopyingJoinCode(false);
     }
   };
 
   const handleGenerateCoachCode = async () => {
+    if (!team || isGeneratingCode) return;
     setIsGeneratingCode(true);
     
     try {
-      // TODO: Implement coach code generation with Supabase
-      // This would require creating a coach_invitations table or similar
-      toast.error("Coach invitation code generation is not yet implemented.");
-      setIsGeneratingCode(false);
-      
-      // Future implementation:
-      // Generate a unique code, store it in a coach_invitations table
-      // with expiration date and one-time use flag
+      await supabase
+        .from("coach_invites")
+        .update({ used: true })
+        .eq("team_id", team.id)
+        .eq("used", false);
+
+      const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      const code = Array.from({ length: 6 })
+        .map(() => alphabet[Math.floor(Math.random() * alphabet.length)])
+        .join("");
+
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7);
+
+      const { data, error } = await supabase
+        .from("coach_invites")
+        .insert({
+          team_id: team.id,
+          code,
+          created_by: currentUser.id,
+          expires_at: expiresAt.toISOString(),
+          used: false
+        })
+        .select()
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      setGeneratedCode(data.code);
+      setGeneratedCodeExpiry(data.expires_at);
+      toast.success("Coach invitation code generated!");
     } catch (error) {
       console.error("Error generating coach code:", error);
-      toast.error("Failed to generate code");
+      if (error?.code === "42P01") {
+        toast.error("Missing coach_invites table in Supabase. Please run the latest SQL migration.");
+      } else {
+        toast.error(error.message || "Failed to generate code. Please try again.");
+      }
+    } finally {
+      setIsGeneratingCode(false);
     }
-    
-    setIsGeneratingCode(false);
   };
 
-  const copyCoachCode = () => {
-    if (generatedCode) {
-      navigator.clipboard.writeText(generatedCode);
-      toast.success("Coach invitation code copied!");
+  const copyCoachCode = async () => {
+    if (!generatedCode || isCopyingCoachCode) return;
+    setIsCopyingCoachCode(true);
+    try {
+      await copyTextToClipboard(generatedCode, "Coach invitation code copied!");
+    } finally {
+      setIsCopyingCoachCode(false);
     }
   };
 
@@ -284,10 +393,11 @@ export default function TeamSettingsPage() {
               <Button 
                 variant="outline" 
                 onClick={copyJoinCode}
+                disabled={isCopyingJoinCode}
                 className="w-full sm:w-auto flex-shrink-0"
               >
-                <Copy className="w-4 h-4 mr-2" />
-                Copy Code
+                <Copy className={`w-4 h-4 mr-2 ${isCopyingJoinCode ? "animate-pulse" : ""}`} />
+                {isCopyingJoinCode ? "Copying..." : "Copy Code"}
               </Button>
             </div>
           </div>
@@ -332,21 +442,28 @@ export default function TeamSettingsPage() {
                       <p className="text-2xl md:text-3xl font-bold text-emerald-700 tracking-wider break-all">
                         {generatedCode}
                       </p>
-                      <p className="text-xs text-emerald-600 mt-2">Valid for 7 days • One-time use only</p>
+                      {generatedCodeExpiry ? (
+                        <p className="text-xs text-emerald-600 mt-2">
+                          Expires {formatDistanceToNow(new Date(generatedCodeExpiry), { addSuffix: true })} • One-time use only
+                        </p>
+                      ) : (
+                        <p className="text-xs text-emerald-600 mt-2">Valid for 7 days • One-time use only</p>
+                      )}
                     </div>
                     <Button 
                       variant="outline" 
                       onClick={copyCoachCode}
+                      disabled={isCopyingCoachCode}
                       className="w-full sm:w-auto flex-shrink-0 border-emerald-300 hover:bg-emerald-50"
                     >
-                      <Copy className="w-4 h-4 mr-2" />
-                      Copy Code
+                      <Copy className={`w-4 h-4 mr-2 ${isCopyingCoachCode ? "animate-pulse" : ""}`} />
+                      {isCopyingCoachCode ? "Copying..." : "Copy Code"}
                     </Button>
                   </div>
                 </div>
                 <Button 
                   variant="outline"
-                  onClick={() => setGeneratedCode(null)}
+                  onClick={handleGenerateCoachCode}
                   className="w-full sm:w-auto"
                 >
                   Generate New Code
