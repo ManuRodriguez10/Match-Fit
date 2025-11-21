@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useUser } from "../components/UserContext";
 import { supabase } from "@/api/supabaseClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +27,8 @@ export default function TeamSettingsPage() {
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
   const [isCopyingJoinCode, setIsCopyingJoinCode] = useState(false);
   const [isCopyingCoachCode, setIsCopyingCoachCode] = useState(false);
+  const [copyIndicators, setCopyIndicators] = useState({ player: false, coach: false });
+  const copyIndicatorTimeouts = useRef({ player: null, coach: null });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -114,13 +116,33 @@ export default function TeamSettingsPage() {
         document.execCommand("copy");
         document.body.removeChild(textarea);
       }
-      toast.success(successMessage);
+      toast.success(successMessage, { position: "top-center", duration: 2000 });
     } catch (error) {
       console.error("Clipboard error:", error);
-      toast.error("Unable to copy to clipboard. Please try again.");
+      toast.error("Unable to copy to clipboard. Please try again.", { position: "top-center" });
       throw error;
     }
   };
+
+  const triggerCopyIndicator = (key) => {
+    if (copyIndicatorTimeouts.current[key]) {
+      clearTimeout(copyIndicatorTimeouts.current[key]);
+    }
+    setCopyIndicators(prev => ({ ...prev, [key]: true }));
+    copyIndicatorTimeouts.current[key] = setTimeout(() => {
+      setCopyIndicators(prev => ({ ...prev, [key]: false }));
+    }, 1800);
+  };
+
+  useEffect(() => {
+    return () => {
+      Object.values(copyIndicatorTimeouts.current).forEach((timeoutId) => {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+      });
+    };
+  }, []);
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -196,6 +218,7 @@ export default function TeamSettingsPage() {
     setIsCopyingJoinCode(true);
     try {
       await copyTextToClipboard(team.join_code, "Team code copied to clipboard!");
+      triggerCopyIndicator("player");
     } finally {
       setIsCopyingJoinCode(false);
     }
@@ -229,16 +252,20 @@ export default function TeamSettingsPage() {
           expires_at: expiresAt.toISOString(),
           used: false
         })
-        .select()
-        .single();
+        .select();
 
       if (error) {
         throw error;
       }
 
-      setGeneratedCode(data.code);
-      setGeneratedCodeExpiry(data.expires_at);
-      toast.success("Coach invitation code generated!");
+      const invite = Array.isArray(data) ? data[0] : data;
+      if (!invite) {
+        throw new Error("Unable to create invite code. Please try again.");
+      }
+
+      setGeneratedCode(invite.code);
+      setGeneratedCodeExpiry(invite.expires_at);
+      toast.success("Coach invitation code generated!", { position: "top-center", duration: 2500 });
     } catch (error) {
       console.error("Error generating coach code:", error);
       if (error?.code === "42P01") {
@@ -256,6 +283,7 @@ export default function TeamSettingsPage() {
     setIsCopyingCoachCode(true);
     try {
       await copyTextToClipboard(generatedCode, "Coach invitation code copied!");
+      triggerCopyIndicator("coach");
     } finally {
       setIsCopyingCoachCode(false);
     }
@@ -390,15 +418,20 @@ export default function TeamSettingsPage() {
                   {team.join_code}
                 </p>
               </div>
-              <Button 
-                variant="outline" 
-                onClick={copyJoinCode}
-                disabled={isCopyingJoinCode}
-                className="w-full sm:w-auto flex-shrink-0"
-              >
-                <Copy className={`w-4 h-4 mr-2 ${isCopyingJoinCode ? "animate-pulse" : ""}`} />
-                {isCopyingJoinCode ? "Copying..." : "Copy Code"}
-              </Button>
+              <div className="flex flex-col items-center sm:items-end gap-1 w-full sm:w-auto">
+                <Button 
+                  variant="outline" 
+                  onClick={copyJoinCode}
+                  disabled={isCopyingJoinCode}
+                  className="w-full sm:w-auto flex-shrink-0"
+                >
+                  <Copy className={`w-4 h-4 mr-2 ${isCopyingJoinCode ? "animate-pulse" : ""}`} />
+                  {isCopyingJoinCode ? "Copying..." : "Copy Code"}
+                </Button>
+                {copyIndicators.player && (
+                  <span className="text-xs text-emerald-600">Code copied to clipboard</span>
+                )}
+              </div>
             </div>
           </div>
         </CardContent>
@@ -450,15 +483,20 @@ export default function TeamSettingsPage() {
                         <p className="text-xs text-emerald-600 mt-2">Valid for 7 days • One-time use only</p>
                       )}
                     </div>
-                    <Button 
-                      variant="outline" 
-                      onClick={copyCoachCode}
-                      disabled={isCopyingCoachCode}
-                      className="w-full sm:w-auto flex-shrink-0 border-emerald-300 hover:bg-emerald-50"
-                    >
-                      <Copy className={`w-4 h-4 mr-2 ${isCopyingCoachCode ? "animate-pulse" : ""}`} />
-                      {isCopyingCoachCode ? "Copying..." : "Copy Code"}
-                    </Button>
+                    <div className="flex flex-col items-center sm:items-end gap-1 w-full sm:w-auto">
+                      <Button 
+                        variant="outline" 
+                        onClick={copyCoachCode}
+                        disabled={isCopyingCoachCode}
+                        className="w-full sm:w-auto flex-shrink-0 border-emerald-300 hover:bg-emerald-50"
+                      >
+                        <Copy className={`w-4 h-4 mr-2 ${isCopyingCoachCode ? "animate-pulse" : ""}`} />
+                        {isCopyingCoachCode ? "Copying..." : "Copy Code"}
+                      </Button>
+                      {copyIndicators.coach && (
+                        <span className="text-xs text-emerald-600">Coach code copied</span>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <Button 
