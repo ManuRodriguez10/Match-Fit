@@ -1,32 +1,65 @@
 
 import React, { useState, useEffect, useCallback } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/api/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, MapPin, Users } from "lucide-react";
 import { format, isFuture, isPast, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
 import EventDetails from "./EventDetails";
+import { toast } from "sonner";
 
 export default function PlayerEventsView({ user }) {
   const [events, setEvents] = useState([]);
   const [lineups, setLineups] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const loadData = useCallback(async () => {
-    try {
-      const [eventData, lineupData] = await Promise.all([
-        base44.entities.Event.filter({ team_id: user.team_id }, "-date"),
-        base44.entities.Lineup.filter({ team_id: user.team_id, published: true })
-      ]);
-      setEvents(eventData || []);
-      setLineups(lineupData || []);
-    } catch (error) {
-      console.error("Error loading data:", error);
+    if (!user?.team_id) {
       setEvents([]);
       setLineups([]);
+      setIsLoading(false);
+      return;
     }
-  }, [user.team_id]);
+    setIsLoading(true);
+    try {
+      const { data: eventData, error: eventsError } = await supabase
+        .from("events")
+        .select("*")
+        .eq("team_id", user.team_id)
+        .order("date", { ascending: true });
+
+      if (eventsError) {
+        throw eventsError;
+      }
+      setEvents(eventData || []);
+    } catch (error) {
+      console.error("Error loading events:", error);
+      toast.error("Unable to load events.");
+      setEvents([]);
+    }
+
+    try {
+      const { data: lineupData, error: lineupsError } = await supabase
+        .from("lineups")
+        .select("*")
+        .eq("team_id", user.team_id)
+        .eq("published", true)
+        .order("created_at", { ascending: false });
+
+      if (lineupsError) {
+        throw lineupsError;
+      }
+      setLineups(lineupData || []);
+    } catch (error) {
+      // Lineups may not be implemented yet; log and continue.
+      console.warn("Lineups unavailable:", error.message);
+      setLineups([]);
+    }
+
+    setIsLoading(false);
+  }, [user?.team_id]);
 
   useEffect(() => {
     loadData();
@@ -104,6 +137,22 @@ export default function PlayerEventsView({ user }) {
   
   const upcomingEvents = events.filter(e => isFuture(new Date(e.date)));
   const pastEvents = events.filter(e => isPast(new Date(e.date)));
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Team Calendar</h1>
+          <p className="text-gray-600 mt-1">View team events and schedule</p>
+        </div>
+        <Card>
+          <CardContent>
+            <p className="text-gray-500">Loading events...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

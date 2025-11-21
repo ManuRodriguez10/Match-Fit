@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/api/supabaseClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,10 +25,35 @@ export default function PlayerDashboard({ user }) {
   });
 
   const loadDashboardData = useCallback(async () => {
+    if (!user?.team_id) return;
     try {
+      const fetchTable = async (promise, label) => {
+        const { data, error } = await promise;
+        if (error) {
+          console.warn(`Error loading ${label}:`, error.message);
+          return [];
+        }
+        return data || [];
+      };
+
       const [events, lineups] = await Promise.all([
-        base44.entities.Event.filter({ team_id: user.team_id }, "-date"),
-        base44.entities.Lineup.filter({ team_id: user.team_id, published: true }, "-created_date")
+        fetchTable(
+          supabase
+            .from("events")
+            .select("*")
+            .eq("team_id", user.team_id)
+            .order("date", { ascending: true }),
+          "events"
+        ),
+        fetchTable(
+          supabase
+            .from("lineups")
+            .select("*")
+            .eq("team_id", user.team_id)
+            .eq("published", true)
+            .order("created_at", { ascending: false }),
+          "lineups"
+        )
       ]);
 
       // Filter to only include future events

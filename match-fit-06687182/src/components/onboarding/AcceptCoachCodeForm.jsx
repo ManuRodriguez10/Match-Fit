@@ -43,31 +43,65 @@ export default function AcceptCoachCodeForm({ user, onComplete, onBack }) {
         return;
       }
 
-      const { data: teams, error: teamError } = await supabase
-        .from("teams")
-        .select("*")
-        .eq("join_code", invitationCode.toUpperCase())
-        .limit(1);
+      const normalizedCode = invitationCode.trim().toUpperCase();
+      const nowIso = new Date().toISOString();
 
-      if (teamError) {
-        throw teamError;
+      let targetTeamId = null;
+      let coachInviteId = null;
+
+      try {
+        const { data: invite, error: inviteError } = await supabase
+          .from("coach_invites")
+          .select("*")
+          .eq("code", normalizedCode)
+          .eq("used", false)
+          .gt("expires_at", nowIso)
+          .order("expires_at", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+
+        if (!inviteError && invite) {
+          targetTeamId = invite.team_id;
+          coachInviteId = invite.id;
+        }
+      } catch (inviteLookupError) {
+        console.warn("Coach invite lookup failed:", inviteLookupError.message);
       }
 
-      if (!teams || teams.length === 0) {
-        setError("Invalid invitation code. Please check the code and try again.");
-        setIsSubmitting(false);
-        return;
-      }
+      if (!targetTeamId) {
+        const { data: teams, error: teamError } = await supabase
+          .from("teams")
+          .select("*")
+          .eq("join_code", normalizedCode)
+          .limit(1);
 
-      const team = teams[0];
+        if (teamError) {
+          throw teamError;
+        }
+
+        if (!teams || teams.length === 0) {
+          setError("Invalid invitation code. Please check the code and try again.");
+          setIsSubmitting(false);
+          return;
+        }
+
+        targetTeamId = teams[0].id;
+      }
 
       const { error: profileError } = await supabase
         .from("profiles")
-        .update({ team_id: team.id })
+        .update({ team_id: targetTeamId })
         .eq("id", authUser.id);
 
       if (profileError) {
         throw profileError;
+      }
+
+      if (coachInviteId) {
+        await supabase
+          .from("coach_invites")
+          .update({ used: true })
+          .eq("id", coachInviteId);
       }
 
       onComplete();

@@ -5,16 +5,12 @@ import PlayerDashboard from "../components/dashboard/PlayerDashboard";
 import RoleSetup from "../components/onboarding/RoleSetup";
 import TeamOnboarding from "../components/onboarding/TeamOnboarding";
 import PlayerProfileCompletion from "../components/onboarding/PlayerProfileCompletion";
-import { base44 } from "@/api/base44Client";
 
 export default function Dashboard() {
   const { currentUser, isLoadingUser, loadCurrentUser } = useUser();
 
   const handleResetRole = async () => {
     try {
-      // TODO: Replace with your authentication system
-      // await base44.auth.updateMe({ team_role: null });
-      // Temporarily disabled to allow local development without base44
       await loadCurrentUser();
     } catch (error) {
       console.error("Error resetting role:", error);

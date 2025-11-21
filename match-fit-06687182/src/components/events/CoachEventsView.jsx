@@ -59,8 +59,7 @@ export default function CoachEventsView({ user }) {
     try {
       const payload = {
         ...eventData,
-        team_id: user.team_id,
-        created_by: user.id
+        team_id: user.team_id
       };
 
       const { error } = await supabase
@@ -232,13 +231,15 @@ export default function CoachEventsView({ user }) {
           <h1 className="text-3xl font-bold text-gray-900">Team Calendar</h1>
           <p className="text-gray-600 mt-1">Schedule and manage team events</p>
         </div>
-        <Button 
-          className="bg-[var(--primary-main)] hover:bg-[var(--primary-dark)]"
-          onClick={() => setShowEventForm(true)}
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Create Event
-        </Button>
+        {!showEventForm && (
+          <Button 
+            className="bg-[var(--primary-main)] hover:bg-[var(--primary-dark)]"
+            onClick={() => setShowEventForm(true)}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Create Event
+          </Button>
+        )}
       </div>
 
       {showEventForm && (

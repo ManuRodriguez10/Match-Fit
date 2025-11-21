@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/api/supabaseClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -9,7 +9,8 @@ import {
   Users, 
   Clipboard,
   Plus,
-  Trophy
+  Trophy,
+  AlertTriangle
 } from "lucide-react";
 import { format, isPast, parseISO } from "date-fns";
 
@@ -17,20 +18,61 @@ export default function CoachDashboard({ user }) {
   const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [teamStats, setTeamStats] = useState({ totalPlayers: 0, activeEvents: 0, publishedLineups: 0 });
   const [recentLineups, setRecentLineups] = useState([]);
+  const coachName =
+    user.full_name ||
+    [user.first_name, user.last_name].filter(Boolean).join(" ") ||
+    user.email;
+  const isProfileIncomplete = !user.first_name || !user.last_name || !user.coach_role || !user.phone;
 
   useEffect(() => {
     loadDashboardData();
-  }, []);
+  }, [user?.team_id]);
 
   const loadDashboardData = async () => {
+    if (!user?.team_id) {
+      setUpcomingEvents([]);
+      setRecentLineups([]);
+      setTeamStats({ totalPlayers: 0, activeEvents: 0, publishedLineups: 0 });
+      return;
+    }
     try {
-      const [events, lineups, playersResponse] = await Promise.all([
-        base44.entities.Event.filter({ team_id: user.team_id }, "-date"),
-        base44.entities.Lineup.filter({ team_id: user.team_id, published: true }, "-created_date"),
-        base44.functions.invoke('getTeamMembers')
+      const fetchTable = async (promise, label) => {
+        const { data, error } = await promise;
+        if (error) {
+          console.warn(`Error loading ${label}:`, error.message);
+          return [];
+        }
+        return data || [];
+      };
+
+      const [events, lineups, players] = await Promise.all([
+        fetchTable(
+          supabase
+            .from("events")
+            .select("*")
+            .eq("team_id", user.team_id)
+            .order("date", { ascending: true }),
+          "events"
+        ),
+        fetchTable(
+          supabase
+            .from("lineups")
+            .select("*")
+            .eq("team_id", user.team_id)
+            .eq("published", true)
+            .order("created_at", { ascending: false }),
+          "lineups"
+        ),
+        fetchTable(
+          supabase
+            .from("profiles")
+            .select("id, team_role")
+            .eq("team_id", user.team_id),
+          "profiles"
+        )
       ]);
 
-      const players = playersResponse.data.teamMembers.filter(member => member.team_role === "player");
+      const playerMembers = players.filter(member => member.team_role === "player");
 
       // Filter to only include future events
       const now = new Date();
@@ -55,7 +97,7 @@ export default function CoachDashboard({ user }) {
       setRecentLineups(futureLineups.slice(0, 3));
       
       setTeamStats({
-        totalPlayers: players.length,
+        totalPlayers: playerMembers.length,
         activeEvents: futureEvents.length,
         publishedLineups: futureLineups.length
       });
@@ -70,7 +112,7 @@ export default function CoachDashboard({ user }) {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Coach Dashboard</h1>
           <p className="text-gray-600 mt-1">
-            Welcome back, {user.first_name} {user.last_name}
+            Welcome back, {coachName}
           </p>
         </div>
         <div className="flex gap-3">
@@ -82,6 +124,29 @@ export default function CoachDashboard({ user }) {
           </Link>
         </div>
       </div>
+
+      {isProfileIncomplete && (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between py-4">
+            <div className="flex items-start gap-3">
+              <div className="text-amber-600">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="font-semibold text-amber-900">Finish setting up your coach profile</p>
+                <p className="text-sm text-amber-800">
+                  Add your name, phone number, role, and experience so players know who is leading the team.
+                </p>
+              </div>
+            </div>
+            <Link to={createPageUrl("CoachProfile")}>
+              <Button className="bg-amber-600 hover:bg-amber-700 text-white">
+                Complete Profile
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
