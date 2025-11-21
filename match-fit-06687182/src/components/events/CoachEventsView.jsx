@@ -25,7 +25,7 @@ export default function CoachEventsView({ user }) {
       return;
     }
     loadEvents();
-  }, [user?.team_id]);
+  }, [user?.team_id, location.pathname]);
 
   useEffect(() => {
     setSelectedEvent(null);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { useUser } from "../components/UserContext";
 import { supabase } from "@/api/supabaseClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +14,7 @@ import { createPageUrl } from "@/utils";
 import { formatDistanceToNow } from "date-fns";
 
 export default function TeamSettingsPage() {
+  const location = useLocation();
   const { currentUser, isLoadingUser } = useUser();
   const [team, setTeam] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,7 +37,7 @@ export default function TeamSettingsPage() {
     if (currentUser) {
       loadTeamData();
     }
-  }, [currentUser]);
+  }, [currentUser, location.pathname]);
 
   const loadTeamData = async () => {
     if (!currentUser?.team_id) {

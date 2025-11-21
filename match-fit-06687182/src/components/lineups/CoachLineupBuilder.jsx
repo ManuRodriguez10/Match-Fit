@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { useLocation } from "react-router-dom";
+import { supabase } from "@/api/supabaseClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -13,6 +14,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
 export default function CoachLineupBuilder({ user }) {
+  const location = useLocation();
   const [events, setEvents] = useState([]);
   const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [players, setPlayers] = useState([]);
@@ -22,7 +24,7 @@ export default function CoachLineupBuilder({ user }) {
   const [startingLineup, setStartingLineup] = useState([]);
   const [substitutes, setSubstitutes] = useState([]);
   const [existingLineup, setExistingLineup] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [showPlayerModal, setShowPlayerModal] = useState(false);
@@ -31,7 +33,7 @@ export default function CoachLineupBuilder({ user }) {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [location.pathname]);
 
   useEffect(() => {
     if (selectedEventId) {
@@ -44,12 +46,35 @@ export default function CoachLineupBuilder({ user }) {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [eventsData, playersResponse] = await Promise.all([
-        base44.entities.Event.filter({ team_id: user.team_id, type: "game" }, "-date"),
-        base44.functions.invoke('getTeamMembers')
+      const fetchTable = async (promise, label) => {
+        const { data, error } = await promise;
+        if (error) {
+          console.warn(`Error loading ${label}:`, error.message);
+          return [];
+        }
+        return data || [];
+      };
+
+      const [eventsData, playersData] = await Promise.all([
+        fetchTable(
+          supabase
+            .from("events")
+            .select("*")
+            .eq("team_id", user.team_id)
+            .eq("type", "game")
+            .order("date", { ascending: false }),
+          "events"
+        ),
+        fetchTable(
+          supabase
+            .from("profiles")
+            .select("*")
+            .eq("team_id", user.team_id),
+          "profiles"
+        )
       ]);
       
-      const allPlayers = playersResponse.data.teamMembers.filter(member => member.team_role === "player");
+      const allPlayers = playersData.filter(member => member.team_role === "player");
       
       // Filter to only include future games for lineup creation
       const now = new Date();
@@ -70,9 +95,19 @@ export default function CoachLineupBuilder({ user }) {
 
   const loadLineupForEvent = async (eventId) => {
     try {
-      const lineups = await base44.entities.Lineup.filter({ team_id: user.team_id, event_id: eventId });
-      if (lineups.length > 0) {
-        const lineup = lineups[0];
+      const { data: lineupsData, error } = await supabase
+        .from("lineups")
+        .select("*")
+        .eq("team_id", user.team_id)
+        .eq("event_id", eventId)
+        .limit(1);
+      
+      if (error) {
+        throw error;
+      }
+      
+      if (lineupsData && lineupsData.length > 0) {
+        const lineup = lineupsData[0];
         setExistingLineup(lineup);
         setFormation(lineup.formation);
         setStartingLineup(lineup.starting_lineup || []);
@@ -80,7 +115,7 @@ export default function CoachLineupBuilder({ user }) {
         if (lineup.substitutes && lineup.substitutes.length > 10) {
           setBenchSlots(lineup.substitutes.length);
         } else {
-          setBenchSlots(10); // Reset to default if fewer than 10 subs or none
+          setBenchSlots(10);
         }
       } else {
         setExistingLineup(null);
@@ -223,13 +258,23 @@ export default function CoachLineupBuilder({ user }) {
       };
 
       if (existingLineup) {
-        await base44.entities.Lineup.update(existingLineup.id, lineupData);
+        const { error } = await supabase
+          .from("lineups")
+          .update(lineupData)
+          .eq("id", existingLineup.id);
+        
+        if (error) throw error;
         toast.success("Lineup draft saved");
-        // Re-fetch lineup to ensure local state is consistent with DB, especially 'published' status
         loadLineupForEvent(selectedEventId);
       } else {
-        const newLineup = await base44.entities.Lineup.create(lineupData);
-        setExistingLineup(newLineup);
+        const { data, error } = await supabase
+          .from("lineups")
+          .insert(lineupData)
+          .select()
+          .single();
+        
+        if (error) throw error;
+        setExistingLineup(data);
         toast.success("Lineup draft created");
       }
     } catch (error) {
@@ -262,17 +307,29 @@ export default function CoachLineupBuilder({ user }) {
       };
 
       if (existingLineup) {
-        await base44.entities.Lineup.update(existingLineup.id, lineupData);
-        setExistingLineup(prev => ({ ...prev, published: true })); // Optimistically update published status
+        const { error } = await supabase
+          .from("lineups")
+          .update(lineupData)
+          .eq("id", existingLineup.id);
+        
+        if (error) throw error;
+        setExistingLineup(prev => ({ ...prev, published: true }));
       } else {
-        const newLineup = await base44.entities.Lineup.create(lineupData);
-        setExistingLineup(newLineup);
+        const { data, error } = await supabase
+          .from("lineups")
+          .insert(lineupData)
+          .select()
+          .single();
+        
+        if (error) throw error;
+        setExistingLineup(data);
       }
 
       // Send email notifications to all players
-      await sendLineupNotifications();
+      // TODO: Implement email notifications using Supabase Edge Functions or another service
+      // await sendLineupNotifications();
 
-      toast.success("Lineup published and players notified!");
+      toast.success("Lineup published!");
     } catch (error) {
       console.error("Error publishing lineup:", error);
       toast.error("Failed to publish lineup");
@@ -281,28 +338,24 @@ export default function CoachLineupBuilder({ user }) {
     }
   };
 
-  const sendLineupNotifications = async () => {
-    try {
-      const eventTitle = selectedEvent?.title || "your upcoming game";
-      const eventDate = selectedEvent?.date ? format(new Date(selectedEvent.date), "MMMM d, yyyy") : "";
-      const lineupPageUrl = `${window.location.origin}${createPageUrl(`Lineups?eventId=${selectedEventId}`)}`;
-      
-      for (const player of players) {
-        const playerName = player.first_name && player.last_name 
-          ? `${player.first_name} ${player.last_name}` 
-          : player.email;
-          
-        await base44.integrations.Core.SendEmail({
-          to: player.email,
-          subject: `MatchFit: Lineup Published for ${eventTitle}`,
-          body: `Hi ${playerName},\n\nCoach ${user.first_name && user.last_name ? `${user.first_name} ${user.last_name}` : user.email} has published the lineup for your upcoming ${eventTitle}${eventDate ? ` on ${eventDate}` : ''}.\n\nClick here to see the lineup: ${lineupPageUrl}\n\nGood luck!\n\n- MatchFit Team `
-        });
-      }
-    } catch (error) {
-      console.error("Error sending notifications:", error);
-      // Don't throw error - lineup is already published
-    }
-  };
+  // TODO: Implement email notifications using Supabase Edge Functions or another service
+  // const sendLineupNotifications = async () => {
+  //   try {
+  //     const eventTitle = selectedEvent?.title || "your upcoming game";
+  //     const eventDate = selectedEvent?.date ? format(new Date(selectedEvent.date), "MMMM d, yyyy") : "";
+  //     const lineupPageUrl = `${window.location.origin}${createPageUrl(`Lineups?eventId=${selectedEventId}`)}`;
+  //     
+  //     for (const player of players) {
+  //       const playerName = player.first_name && player.last_name 
+  //         ? `${player.first_name} ${player.last_name}` 
+  //         : player.email;
+  //         
+  //       // TODO: Implement email sending via Supabase Edge Function or email service
+  //     }
+  //   } catch (error) {
+  //     console.error("Error sending notifications:", error);
+  //   }
+  // };
 
   const handleDeleteLineup = async () => {
     if (!existingLineup) return;
@@ -310,12 +363,18 @@ export default function CoachLineupBuilder({ user }) {
     if (!confirm("Are you sure you want to delete this lineup? This action cannot be undone.")) return;
 
     try {
-      await base44.entities.Lineup.delete(existingLineup.id);
+      const { error } = await supabase
+        .from("lineups")
+        .delete()
+        .eq("id", existingLineup.id);
+      
+      if (error) throw error;
+      
       setExistingLineup(null);
       setStartingLineup([]);
       setSubstitutes([]);
-      setBenchSlots(10); // Reset bench slots
-      setFormation("4-4-2"); // Reset formation
+      setBenchSlots(10);
+      setFormation("4-4-2");
       toast.success("Lineup deleted");
     } catch (error) {
       console.error("Error deleting lineup:", error);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { useUser } from "../components/UserContext";
 import { supabase } from "@/api/supabaseClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +16,7 @@ const parseLocalDate = (dateString) => {
 };
 
 export default function RosterPage() {
+  const location = useLocation();
   const { currentUser, isLoadingUser } = useUser();
   const [teamMembers, setTeamMembers] = useState([]);
   const [selectedMember, setSelectedMember] = useState(null);
@@ -24,7 +26,7 @@ export default function RosterPage() {
     if (currentUser) {
       loadTeamMembers();
     }
-  }, [currentUser]);
+  }, [currentUser, location.pathname]);
 
   const loadTeamMembers = async () => {
     if (!currentUser?.team_id) {

@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from "react";
+import { useLocation } from "react-router-dom";
 import { supabase } from "@/api/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +11,7 @@ import EventDetails from "./EventDetails";
 import { toast } from "sonner";
 
 export default function PlayerEventsView({ user }) {
+  const location = useLocation();
   const [events, setEvents] = useState([]);
   const [lineups, setLineups] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -59,7 +61,7 @@ export default function PlayerEventsView({ user }) {
     }
 
     setIsLoading(false);
-  }, [user?.team_id]);
+  }, [user?.team_id, location.pathname]);
 
   useEffect(() => {
     loadData();

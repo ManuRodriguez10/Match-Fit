@@ -141,13 +141,16 @@ export const UserProvider = ({ children }) => {
   useEffect(() => {
     let isInitialLoad = true;
     let hasCompletedInitialLoad = false;
+    const hasCompletedInitialLoadRef = { current: false };
     
     // Start initial load
     loadCurrentUser().then(() => {
       hasCompletedInitialLoad = true;
+      hasCompletedInitialLoadRef.current = true;
       isInitialLoad = false;
     }).catch(() => {
       hasCompletedInitialLoad = true;
+      hasCompletedInitialLoadRef.current = true;
       isInitialLoad = false;
     });
     
@@ -158,6 +161,7 @@ export const UserProvider = ({ children }) => {
         setIsLoadingUser(false);
         isLoadingRef.current = false;
         hasCompletedInitialLoad = true;
+        hasCompletedInitialLoadRef.current = true;
         isInitialLoad = false;
       }
     }, 3000); // 3 second timeout
@@ -167,8 +171,13 @@ export const UserProvider = ({ children }) => {
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       // Don't process auth state changes during initial load
       // Only process after initial load is complete
-      if (isInitialLoad || !hasCompletedInitialLoad) {
+      if (isInitialLoad || !hasCompletedInitialLoad || !hasCompletedInitialLoadRef.current) {
         console.log("Skipping auth state change during initial load:", _event);
+        return;
+      }
+      
+      // Ignore INITIAL_SESSION - don't reload, page should stay as-is when tab becomes visible
+      if (_event === 'INITIAL_SESSION') {
         return;
       }
       

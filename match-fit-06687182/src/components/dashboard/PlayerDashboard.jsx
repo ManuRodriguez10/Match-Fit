@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useLocation } from "react-router-dom";
 import { supabase } from "@/api/supabaseClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import {
 import { format, isPast, parseISO } from "date-fns";
 
 export default function PlayerDashboard({ user }) {
+  const location = useLocation();
   const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [upcomingLineups, setUpcomingLineups] = useState([]);
   const [playerStats, setPlayerStats] = useState({ 
@@ -90,7 +92,7 @@ export default function PlayerDashboard({ user }) {
     } catch (error) {
       console.error("Error loading dashboard data:", error);
     }
-  }, [user.email, user.team_id]);
+  }, [user.email, user.team_id, location.pathname]);
 
   useEffect(() => {
     loadDashboardData();
