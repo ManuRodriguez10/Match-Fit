@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { supabase } from "@/api/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, LogOut } from "lucide-react";
 import { toast } from "sonner";
+import { createPageUrl } from "@/utils";
 
 const COUNTRIES = [
   "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", 
@@ -111,16 +113,32 @@ export default function PlayerProfileCompletion({ user, onComplete }) {
 
   const loadTeamJerseyNumbers = async () => {
     try {
-      const response = await base44.functions.invoke('getTeamMembers');
-      const teamMembers = response.data.teamMembers;
-      
-      const taken = teamMembers
+      if (!user?.team_id) {
+        setTakenJerseyNumbers([]);
+        return;
+      }
+
+      // Fetch team members from Supabase profiles table
+      const { data: members, error } = await supabase
+        .from('profiles')
+        .select('id, jersey_number, team_role')
+        .eq('team_id', user.team_id);
+
+      if (error) {
+        console.error("Error loading team jersey numbers:", error);
+        setTakenJerseyNumbers([]);
+        return;
+      }
+
+      const taken = (members || [])
         .filter(member => member.team_role === "player" && member.jersey_number && member.id !== user.id)
-        .map(member => member.jersey_number);
+        .map(member => parseInt(member.jersey_number))
+        .filter(num => !isNaN(num));
       
       setTakenJerseyNumbers(taken);
     } catch (error) {
       console.error("Error loading team jersey numbers:", error);
+      setTakenJerseyNumbers([]);
     }
   };
 
@@ -275,7 +293,8 @@ export default function PlayerProfileCompletion({ user, onComplete }) {
 
   const handleLogout = async () => {
     try {
-      await base44.auth.logout();
+      await supabase.auth.signOut();
+      window.location.href = createPageUrl("Login");
     } catch (error) {
       console.error("Error logging out:", error);
       toast.error("Failed to logout. Please try again.");
@@ -346,7 +365,16 @@ export default function PlayerProfileCompletion({ user, onComplete }) {
         updateData.full_name = `${playerData.first_name} ${playerData.last_name}`;
       }
       
-      await base44.auth.updateMe(updateData);
+      // Update profile in Supabase
+      const { error } = await supabase
+        .from("profiles")
+        .update(updateData)
+        .eq("id", user.id);
+
+      if (error) {
+        throw error;
+      }
+
       toast.success("Profile updated successfully!");
       onComplete();
     } catch (error) {

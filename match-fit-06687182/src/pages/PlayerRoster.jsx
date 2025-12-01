@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { useUser } from "../components/UserContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Shield, Target, Zap, TrendingUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+import { Users, Shield, Target, Zap, TrendingUp, Lock, User } from "lucide-react";
 import { format } from "date-fns";
 import RosterMemberDetails from "../components/roster/RosterMemberDetails";
 
@@ -14,6 +18,7 @@ const parseLocalDate = (dateString) => {
 };
 
 export default function PlayerRosterPage() {
+  const { currentUser: contextUser, isLoadingUser } = useUser();
   const [currentUser, setCurrentUser] = useState(null);
   const [teamMembers, setTeamMembers] = useState([]);
   const [team, setTeam] = useState(null);
@@ -46,7 +51,7 @@ export default function PlayerRosterPage() {
     setIsLoading(false);
   };
 
-  if (isLoading) {
+  if (isLoadingUser || isLoading) {
     return (
       <div className="p-6">
         <div className="animate-pulse space-y-6">
@@ -57,7 +62,10 @@ export default function PlayerRosterPage() {
     );
   }
 
-  if (!currentUser || currentUser.team_role !== "player") {
+  // Use contextUser if available, otherwise fall back to currentUser from base44
+  const user = contextUser || currentUser;
+
+  if (!user || user.team_role !== "player") {
     return (
       <div className="p-6">
         <div className="text-center py-12">
@@ -65,6 +73,33 @@ export default function PlayerRosterPage() {
           <h3 className="text-lg font-medium text-gray-900 mb-2">Roster Access</h3>
           <p className="text-gray-600">This page is only available to players.</p>
         </div>
+      </div>
+    );
+  }
+
+  // Check if player profile is incomplete
+  const isPlayerProfileIncomplete = !user.position || !user.jersey_number;
+
+  if (isPlayerProfileIncomplete) {
+    return (
+      <div className="p-6">
+        <Card className="max-w-2xl mx-auto">
+          <CardContent className="py-12 text-center">
+            <Lock className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              Complete Player Profile to Unlock Access
+            </h3>
+            <p className="text-gray-600 mb-6">
+              You need to complete your player profile before you can view the team roster.
+            </p>
+            <Link to={createPageUrl("Dashboard")}>
+              <Button className="bg-[var(--primary-main)] hover:bg-[var(--primary-dark)]">
+                <User className="w-4 h-4 mr-2" />
+                Complete Profile
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -205,7 +240,7 @@ export default function PlayerRosterPage() {
       {selectedMember && (
         <RosterMemberDetails
           member={selectedMember}
-          currentUser={currentUser}
+          currentUser={user}
           onClose={() => setSelectedMember(null)}
         />
       )}

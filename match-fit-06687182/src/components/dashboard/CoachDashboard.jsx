@@ -9,7 +9,6 @@ import {
   Calendar,
   Users, 
   Clipboard,
-  Plus,
   Trophy,
   AlertTriangle
 } from "lucide-react";
@@ -110,21 +109,11 @@ export default function CoachDashboard({ user }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Coach Dashboard</h1>
-          <p className="text-gray-600 mt-1">
-            Welcome back, {coachName}
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <Link to={createPageUrl("Events")}>
-            <Button className="bg-[var(--primary-main)] hover:bg-[var(--primary-dark)]">
-              <Plus className="w-4 h-4 mr-2" />
-              New Event
-            </Button>
-          </Link>
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Coach Dashboard</h1>
+        <p className="text-gray-600 mt-1">
+          Welcome back, {coachName}
+        </p>
       </div>
 
       {isProfileIncomplete && (

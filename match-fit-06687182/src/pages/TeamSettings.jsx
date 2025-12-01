@@ -37,6 +37,12 @@ export default function TeamSettingsPage() {
     if (currentUser) {
       loadTeamData();
     }
+    
+    // Cleanup: Reset generated code state when component unmounts
+    return () => {
+      setGeneratedCode(null);
+      setGeneratedCodeExpiry(null);
+    };
   }, [currentUser, location.pathname]);
 
   const loadTeamData = async () => {
@@ -62,7 +68,7 @@ export default function TeamSettingsPage() {
           name: teamData.name || "",
           description: teamData.description || ""
         });
-        await loadActiveCoachInvite(teamData.id);
+        // Don't automatically load active coach invite - only show code when explicitly generated
       }
     } catch (error) {
       console.error("Error loading team data:", error);
