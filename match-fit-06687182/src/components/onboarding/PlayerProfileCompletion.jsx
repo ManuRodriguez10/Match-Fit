@@ -353,8 +353,8 @@ export default function PlayerProfileCompletion({ user, onComplete }) {
         first_name: playerData.first_name,
         last_name: playerData.last_name,
         position: playerData.position,
-        jersey_number: playerData.jersey_number,
-        date_of_birth: playerData.date_of_birth,
+        jersey_number: String(playerData.jersey_number || ""), // Ensure it's a string
+        date_of_birth: playerData.date_of_birth || null, // DATE column - HTML date input provides YYYY-MM-DD format
         height: heightString,
         weight: cleanWeight,
         nationality: playerData.nationality,
@@ -372,6 +372,9 @@ export default function PlayerProfileCompletion({ user, onComplete }) {
         .eq("id", user.id);
 
       if (error) {
+        console.error("Supabase update error:", error);
+        console.error("Update data being sent:", updateData);
+        console.error("User ID:", user.id);
         throw error;
       }
 
@@ -379,7 +382,10 @@ export default function PlayerProfileCompletion({ user, onComplete }) {
       onComplete();
     } catch (error) {
       console.error("Error updating player profile:", error);
-      toast.error("There was an error saving your information. Please try again.");
+      // Show more detailed error message if available
+      const errorMessage = error?.message || error?.details || error?.hint || "There was an error saving your information. Please try again.";
+      console.error("Full error details:", JSON.stringify(error, null, 2));
+      toast.error(errorMessage);
     } finally {
         setIsSubmitting(false);
     }

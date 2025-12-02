@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/api/supabaseClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -41,13 +41,44 @@ export default function PlayerLineupViewer({ user, initialEventId }) {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [lineupsData, eventsData, playersResponse] = await Promise.all([
-        base44.entities.Lineup.filter({ team_id: user.team_id, published: true }, "-created_date"),
-        base44.entities.Event.filter({ team_id: user.team_id, type: "game" }, "date"),
-        base44.functions.invoke('getTeamMembers') // Fetch team members
+      const fetchTable = async (promise, label) => {
+        const { data, error } = await promise;
+        if (error) {
+          console.warn(`Error loading ${label}:`, error.message);
+          return [];
+        }
+        return data || [];
+      };
+
+      const [lineupsData, eventsData, playersData] = await Promise.all([
+        fetchTable(
+          supabase
+            .from("lineups")
+            .select("*")
+            .eq("team_id", user.team_id)
+            .eq("published", true)
+            .order("created_at", { ascending: false }),
+          "lineups"
+        ),
+        fetchTable(
+          supabase
+            .from("events")
+            .select("*")
+            .eq("team_id", user.team_id)
+            .eq("type", "game")
+            .order("date", { ascending: true }),
+          "events"
+        ),
+        fetchTable(
+          supabase
+            .from("profiles")
+            .select("*")
+            .eq("team_id", user.team_id),
+          "profiles"
+        )
       ]);
       
-      const allPlayers = playersResponse.data.teamMembers.filter(member => member.team_role === "player");
+      const allPlayers = playersData.filter(member => member.team_role === "player");
       
       // Filter to only include future games
       const now = new Date();
@@ -59,7 +90,7 @@ export default function PlayerLineupViewer({ user, initialEventId }) {
       setLineups(lineupsData);
       setEvents(eventsData);
       setUpcomingEvents(futureGames);
-      setTeamPlayers(allPlayers); // Set team players state
+      setTeamPlayers(allPlayers);
     } catch (error) {
       console.error("Error loading lineups:", error);
     }
