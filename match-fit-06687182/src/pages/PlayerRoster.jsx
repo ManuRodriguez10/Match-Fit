@@ -299,35 +299,20 @@ export default function PlayerRosterPage() {
           {hasMembers && (
             <div className="space-y-4">
               <h2 className="text-2xl font-bold text-gray-900">Players</h2>
-              {hasPlayers ? (
-                <Tabs defaultValue={
-                goalkeepers.length > 0 ? "goalkeepers" :
-                defenders.length > 0 ? "defenders" :
-                midfielders.length > 0 ? "midfielders" :
-                forwards.length > 0 ? "forwards" :
-                playersWithoutPosition.length > 0 ? "no-position" : "goalkeepers"
-              }>
+              <Tabs defaultValue="goalkeepers">
                 <TabsList>
-                  {goalkeepers.length > 0 && (
-                    <TabsTrigger value="goalkeepers">
-                      Goalkeepers ({goalkeepers.length})
-                    </TabsTrigger>
-                  )}
-                  {defenders.length > 0 && (
-                    <TabsTrigger value="defenders">
-                      Defenders ({defenders.length})
-                    </TabsTrigger>
-                  )}
-                  {midfielders.length > 0 && (
-                    <TabsTrigger value="midfielders">
-                      Midfielders ({midfielders.length})
-                    </TabsTrigger>
-                  )}
-                  {forwards.length > 0 && (
-                    <TabsTrigger value="forwards">
-                      Forwards ({forwards.length})
-                    </TabsTrigger>
-                  )}
+                  <TabsTrigger value="goalkeepers">
+                    Goalkeepers ({goalkeepers.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="defenders">
+                    Defenders ({defenders.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="midfielders">
+                    Midfielders ({midfielders.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="forwards">
+                    Forwards ({forwards.length})
+                  </TabsTrigger>
                   {playersWithoutPosition.length > 0 && (
                     <TabsTrigger value="no-position">
                       Other ({playersWithoutPosition.length})
@@ -335,51 +320,62 @@ export default function PlayerRosterPage() {
                   )}
                 </TabsList>
 
-                {goalkeepers.length > 0 && (
-                  <TabsContent value="goalkeepers" className="mt-6">
+                <TabsContent value="goalkeepers" className="mt-6">
+                  {goalkeepers.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {goalkeepers.map(renderPlayerCard)}
                     </div>
-                  </TabsContent>
-                )}
+                  ) : (
+                    <div className="text-center py-8 text-gray-500 bg-white rounded-lg border-2 border-dashed border-gray-200">
+                      No goalkeepers found.
+                    </div>
+                  )}
+                </TabsContent>
 
-                {defenders.length > 0 && (
-                  <TabsContent value="defenders" className="mt-6">
+                <TabsContent value="defenders" className="mt-6">
+                  {defenders.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {defenders.map(renderPlayerCard)}
                     </div>
-                  </TabsContent>
-                )}
+                  ) : (
+                    <div className="text-center py-8 text-gray-500 bg-white rounded-lg border-2 border-dashed border-gray-200">
+                      No defenders found.
+                    </div>
+                  )}
+                </TabsContent>
 
-                {midfielders.length > 0 && (
-                  <TabsContent value="midfielders" className="mt-6">
+                <TabsContent value="midfielders" className="mt-6">
+                  {midfielders.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {midfielders.map(renderPlayerCard)}
                     </div>
-                  </TabsContent>
-                )}
+                  ) : (
+                    <div className="text-center py-8 text-gray-500 bg-white rounded-lg border-2 border-dashed border-gray-200">
+                      No midfielders found.
+                    </div>
+                  )}
+                </TabsContent>
 
-                {forwards.length > 0 && (
-                  <TabsContent value="forwards" className="mt-6">
+                <TabsContent value="forwards" className="mt-6">
+                  {forwards.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {forwards.map(renderPlayerCard)}
                     </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500 bg-white rounded-lg border-2 border-dashed border-gray-200">
+                      No forwards found.
+                    </div>
+                  )}
+                </TabsContent>
+
+                {playersWithoutPosition.length > 0 && (
+                  <TabsContent value="no-position" className="mt-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {playersWithoutPosition.map(renderPlayerCard)}
+                    </div>
                   </TabsContent>
                 )}
-
-                 {playersWithoutPosition.length > 0 && (
-                   <TabsContent value="no-position" className="mt-6">
-                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                       {playersWithoutPosition.map(renderPlayerCard)}
-                     </div>
-                   </TabsContent>
-                 )}
-               </Tabs>
-              ) : (
-                <div className="text-center py-8 text-gray-500 bg-white rounded-lg border-2 border-dashed border-gray-200">
-                  No players found.
-                </div>
-              )}
+              </Tabs>
              </div>
            )}
         </>
