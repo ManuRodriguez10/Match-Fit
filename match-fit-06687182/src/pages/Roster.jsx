@@ -50,7 +50,7 @@ export default function RosterPage() {
         setTeamMembers(members || []);
       }
     } catch (error) {
-      console.error("Error loading roster data:", error);
+      console.error("Roster - Error loading roster data:", error);
     }
     setIsLoading(false);
   };
@@ -81,10 +81,12 @@ export default function RosterPage() {
 
   // Group team members by role and position
   const coaches = teamMembers.filter(m => m.team_role === "coach");
-  const goalkeepers = teamMembers.filter(m => m.team_role === "player" && m.position === "goalkeeper");
-  const defenders = teamMembers.filter(m => m.team_role === "player" && m.position === "defender");
-  const midfielders = teamMembers.filter(m => m.team_role === "player" && m.position === "midfielder");
-  const forwards = teamMembers.filter(m => m.team_role === "player" && m.position === "forward");
+  const allPlayers = teamMembers.filter(m => m.team_role === "player");
+  const goalkeepers = allPlayers.filter(p => p.position === "goalkeeper");
+  const defenders = allPlayers.filter(p => p.position === "defender");
+  const midfielders = allPlayers.filter(p => p.position === "midfielder");
+  const forwards = allPlayers.filter(p => p.position === "forward");
+  const playersWithoutPosition = allPlayers.filter(p => !p.position || !["goalkeeper", "defender", "midfielder", "forward"].includes(p.position));
 
   const getPositionIcon = (position) => {
     switch (position) {
@@ -199,7 +201,7 @@ export default function RosterPage() {
   );
 
   const hasMembers = teamMembers.length > 0;
-  const hasPlayers = goalkeepers.length > 0 || defenders.length > 0 || midfielders.length > 0 || forwards.length > 0;
+  const hasPlayers = allPlayers.length > 0;
 
   return (
     <div className="p-6 space-y-8">
@@ -227,8 +229,8 @@ export default function RosterPage() {
         </div>
       ) : (
         <>
-          {/* Coaching Staff - Always Visible */}
-          {coaches.length > 0 && (
+          {/* Coaching Staff - Shows Only Coaches */}
+          {hasMembers && (
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <Users className="w-6 h-6 text-blue-600" />
@@ -237,17 +239,30 @@ export default function RosterPage() {
                   {coaches.length}
                 </span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {coaches.map(renderCoachCard)}
-              </div>
+              {coaches.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {coaches.map(renderCoachCard)}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500 bg-white rounded-lg border-2 border-dashed border-gray-200">
+                  No coaches found.
+                </div>
+              )}
             </div>
           )}
 
-          {/* Players - Tabbed by Position */}
-          {hasPlayers && (
+          {/* Players - Tabbed by Position - Shows Only Players */}
+          {hasMembers && (
             <div className="space-y-4">
               <h2 className="text-2xl font-bold text-gray-900">Players</h2>
-              <Tabs defaultValue="goalkeepers">
+              {hasPlayers ? (
+                <Tabs defaultValue={
+                goalkeepers.length > 0 ? "goalkeepers" :
+                defenders.length > 0 ? "defenders" :
+                midfielders.length > 0 ? "midfielders" :
+                forwards.length > 0 ? "forwards" :
+                playersWithoutPosition.length > 0 ? "no-position" : "goalkeepers"
+              }>
                 <TabsList>
                   {goalkeepers.length > 0 && (
                     <TabsTrigger value="goalkeepers">
@@ -267,6 +282,11 @@ export default function RosterPage() {
                   {forwards.length > 0 && (
                     <TabsTrigger value="forwards">
                       Forwards ({forwards.length})
+                    </TabsTrigger>
+                  )}
+                  {playersWithoutPosition.length > 0 && (
+                    <TabsTrigger value="no-position">
+                      Other ({playersWithoutPosition.length})
                     </TabsTrigger>
                   )}
                 </TabsList>
@@ -302,9 +322,22 @@ export default function RosterPage() {
                     </div>
                   </TabsContent>
                 )}
-              </Tabs>
-            </div>
-          )}
+
+                 {playersWithoutPosition.length > 0 && (
+                   <TabsContent value="no-position" className="mt-6">
+                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                       {playersWithoutPosition.map(renderPlayerCard)}
+                     </div>
+                   </TabsContent>
+                 )}
+               </Tabs>
+              ) : (
+                <div className="text-center py-8 text-gray-500 bg-white rounded-lg border-2 border-dashed border-gray-200">
+                  No players found.
+                </div>
+              )}
+             </div>
+           )}
         </>
       )}
     </div>

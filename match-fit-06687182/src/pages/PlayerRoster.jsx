@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/api/supabaseClient";
 import { useUser } from "../components/UserContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,35 +18,54 @@ const parseLocalDate = (dateString) => {
 };
 
 export default function PlayerRosterPage() {
-  const { currentUser: contextUser, isLoadingUser } = useUser();
-  const [currentUser, setCurrentUser] = useState(null);
+  const { currentUser, isLoadingUser } = useUser();
   const [teamMembers, setTeamMembers] = useState([]);
   const [team, setTeam] = useState(null);
   const [selectedMember, setSelectedMember] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (currentUser) {
+      loadData();
+    }
+  }, [currentUser]);
 
   const loadData = async () => {
+    if (!currentUser?.team_id) {
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const user = await base44.auth.me();
-      setCurrentUser(user);
+      // Fetch team members from profiles table
+      const { data: members, error: membersError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('team_id', currentUser.team_id)
+        .order('team_role', { ascending: false })
+        .order('last_name');
 
-      if (user.team_id) {
-        const [membersResponse, teams] = await Promise.all([
-          base44.functions.invoke('getTeamMembers'),
-          base44.entities.Team.filter({ id: user.team_id })
-        ]);
-        setTeamMembers(membersResponse.data.teamMembers);
-        if (teams.length > 0) {
-          setTeam(teams[0]);
-        }
+      if (membersError) {
+        console.error("Error loading team members:", membersError);
+      } else {
+        setTeamMembers(members || []);
+      }
+
+      // Fetch team information
+      const { data: teamData, error: teamError } = await supabase
+        .from('teams')
+        .select('*')
+        .eq('id', currentUser.team_id)
+        .single();
+
+      if (teamError) {
+        console.error("PlayerRoster - Error loading team:", teamError);
+      } else {
+        setTeam(teamData);
       }
     } catch (error) {
-      console.error("Error loading roster data:", error);
+      console.error("PlayerRoster - Error loading roster data:", error);
     }
     setIsLoading(false);
   };
@@ -62,10 +81,7 @@ export default function PlayerRosterPage() {
     );
   }
 
-  // Use contextUser if available, otherwise fall back to currentUser from base44
-  const user = contextUser || currentUser;
-
-  if (!user || user.team_role !== "player") {
+  if (!currentUser || currentUser.team_role !== "player") {
     return (
       <div className="p-6">
         <div className="text-center py-12">
@@ -78,7 +94,7 @@ export default function PlayerRosterPage() {
   }
 
   // Check if player profile is incomplete
-  const isPlayerProfileIncomplete = !user.position || !user.jersey_number;
+  const isPlayerProfileIncomplete = !currentUser.position || !currentUser.jersey_number;
 
   if (isPlayerProfileIncomplete) {
     return (
@@ -106,10 +122,12 @@ export default function PlayerRosterPage() {
 
   // Group team members by role and position
   const coaches = teamMembers.filter(m => m.team_role === "coach");
-  const goalkeepers = teamMembers.filter(m => m.team_role === "player" && m.position === "goalkeeper");
-  const defenders = teamMembers.filter(m => m.team_role === "player" && m.position === "defender");
-  const midfielders = teamMembers.filter(m => m.team_role === "player" && m.position === "midfielder");
-  const forwards = teamMembers.filter(m => m.team_role === "player" && m.position === "forward");
+  const allPlayers = teamMembers.filter(m => m.team_role === "player");
+  const goalkeepers = allPlayers.filter(p => p.position === "goalkeeper");
+  const defenders = allPlayers.filter(p => p.position === "defender");
+  const midfielders = allPlayers.filter(p => p.position === "midfielder");
+  const forwards = allPlayers.filter(p => p.position === "forward");
+  const playersWithoutPosition = allPlayers.filter(p => !p.position || !["goalkeeper", "defender", "midfielder", "forward"].includes(p.position));
 
   const getPositionIcon = (position) => {
     switch (position) {
@@ -226,7 +244,7 @@ export default function PlayerRosterPage() {
   );
   
   const hasMembers = teamMembers.length > 0;
-  const hasPlayers = goalkeepers.length > 0 || defenders.length > 0 || midfielders.length > 0 || forwards.length > 0;
+  const hasPlayers = allPlayers.length > 0;
 
   return (
     <div className="p-6 space-y-8">
@@ -240,7 +258,7 @@ export default function PlayerRosterPage() {
       {selectedMember && (
         <RosterMemberDetails
           member={selectedMember}
-          currentUser={user}
+          currentUser={currentUser}
           onClose={() => setSelectedMember(null)}
         />
       )}
@@ -255,8 +273,8 @@ export default function PlayerRosterPage() {
         </div>
       ) : (
         <>
-          {/* Coaching Staff - Always Visible */}
-          {coaches.length > 0 && (
+          {/* Coaching Staff - Shows Only Coaches */}
+          {hasMembers && (
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <Users className="w-6 h-6 text-blue-600" />
@@ -265,17 +283,30 @@ export default function PlayerRosterPage() {
                   {coaches.length}
                 </span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {coaches.map(renderCoachCard)}
-              </div>
+              {coaches.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {coaches.map(renderCoachCard)}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500 bg-white rounded-lg border-2 border-dashed border-gray-200">
+                  No coaches found.
+                </div>
+              )}
             </div>
           )}
 
-          {/* Players - Tabbed by Position */}
-          {hasPlayers && (
+          {/* Players - Tabbed by Position - Shows Only Players */}
+          {hasMembers && (
             <div className="space-y-4">
               <h2 className="text-2xl font-bold text-gray-900">Players</h2>
-              <Tabs defaultValue="goalkeepers">
+              {hasPlayers ? (
+                <Tabs defaultValue={
+                goalkeepers.length > 0 ? "goalkeepers" :
+                defenders.length > 0 ? "defenders" :
+                midfielders.length > 0 ? "midfielders" :
+                forwards.length > 0 ? "forwards" :
+                playersWithoutPosition.length > 0 ? "no-position" : "goalkeepers"
+              }>
                 <TabsList>
                   {goalkeepers.length > 0 && (
                     <TabsTrigger value="goalkeepers">
@@ -295,6 +326,11 @@ export default function PlayerRosterPage() {
                   {forwards.length > 0 && (
                     <TabsTrigger value="forwards">
                       Forwards ({forwards.length})
+                    </TabsTrigger>
+                  )}
+                  {playersWithoutPosition.length > 0 && (
+                    <TabsTrigger value="no-position">
+                      Other ({playersWithoutPosition.length})
                     </TabsTrigger>
                   )}
                 </TabsList>
@@ -330,9 +366,22 @@ export default function PlayerRosterPage() {
                     </div>
                   </TabsContent>
                 )}
-              </Tabs>
-            </div>
-          )}
+
+                 {playersWithoutPosition.length > 0 && (
+                   <TabsContent value="no-position" className="mt-6">
+                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                       {playersWithoutPosition.map(renderPlayerCard)}
+                     </div>
+                   </TabsContent>
+                 )}
+               </Tabs>
+              ) : (
+                <div className="text-center py-8 text-gray-500 bg-white rounded-lg border-2 border-dashed border-gray-200">
+                  No players found.
+                </div>
+              )}
+             </div>
+           )}
         </>
       )}
     </div>
