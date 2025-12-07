@@ -233,6 +233,23 @@ export default function CoachLineupBuilder({ user }) {
     setSubstitutes(substitutes.filter(id => id !== playerId));
   };
 
+  // Remove a bench slot (only if empty and not reducing below assigned players)
+  const handleRemoveBenchSlot = (index) => {
+    // Don't allow removing slots that have players assigned
+    if (substitutes[index]) {
+      return;
+    }
+    
+    // Don't allow reducing below the number of assigned players
+    const minSlots = substitutes.length;
+    if (benchSlots <= minSlots) {
+      toast.warning(`Cannot remove bench slots. You have ${minSlots} players assigned.`);
+      return;
+    }
+    
+    setBenchSlots(benchSlots - 1);
+  };
+
   const getAssignedPlayers = () => {
     const assigned = new Set();
     startingLineup.forEach(p => assigned.add(p.player_id || p.player_email));
@@ -257,13 +274,23 @@ export default function CoachLineupBuilder({ user }) {
         published: existingLineup?.published || false
       };
 
+      console.log("Attempting to save lineup with data:", JSON.stringify(lineupData, null, 2));
+
       if (existingLineup) {
         const { error } = await supabase
           .from("lineups")
           .update(lineupData)
           .eq("id", existingLineup.id);
         
-        if (error) throw error;
+        if (error) {
+          console.error("Error saving lineup (update):", error);
+          console.error("Error code:", error.code);
+          console.error("Error message:", error.message);
+          console.error("Error details:", error.details);
+          console.error("Error hint:", error.hint);
+          console.error("Full error object:", JSON.stringify(error, null, 2));
+          throw error;
+        }
         toast.success("Lineup draft saved");
         loadLineupForEvent(selectedEventId);
       } else {
@@ -273,15 +300,32 @@ export default function CoachLineupBuilder({ user }) {
           .select()
           .single();
         
-        if (error) throw error;
+        if (error) {
+          console.error("Error saving lineup (insert):", error);
+          console.error("Error code:", error.code);
+          console.error("Error message:", error.message);
+          console.error("Error details:", error.details);
+          console.error("Error hint:", error.hint);
+          console.error("Full error object:", JSON.stringify(error, null, 2));
+          throw error;
+        }
         setExistingLineup(data);
         toast.success("Lineup draft created");
       }
     } catch (error) {
       console.error("Error saving lineup:", error);
-      toast.error("Failed to save lineup");
+      console.error("Error code:", error.code);
+      console.error("Error message:", error.message);
+      console.error("Error details:", error.details);
+      console.error("Error hint:", error.hint);
+      // Show more detailed error message
+      const errorMessage = error.message || "Failed to save lineup";
+      const errorDetails = error.details ? `: ${error.details}` : "";
+      const errorHint = error.hint ? ` (${error.hint})` : "";
+      toast.error(`Failed to save lineup: ${errorMessage}${errorDetails}${errorHint}`);
+    } finally {
+      setIsSaving(false);
     }
-    setIsSaving(false);
   };
 
   const handlePublish = async () => {
@@ -312,7 +356,16 @@ export default function CoachLineupBuilder({ user }) {
           .update(lineupData)
           .eq("id", existingLineup.id);
         
-        if (error) throw error;
+        if (error) {
+          console.error("Error publishing lineup (update):", error);
+          console.error("Error details:", {
+            code: error.code,
+            message: error.message,
+            details: error.details,
+            hint: error.hint
+          });
+          throw error;
+        }
         setExistingLineup(prev => ({ ...prev, published: true }));
       } else {
         const { data, error } = await supabase
@@ -321,7 +374,16 @@ export default function CoachLineupBuilder({ user }) {
           .select()
           .single();
         
-        if (error) throw error;
+        if (error) {
+          console.error("Error publishing lineup (insert):", error);
+          console.error("Error details:", {
+            code: error.code,
+            message: error.message,
+            details: error.details,
+            hint: error.hint
+          });
+          throw error;
+        }
         setExistingLineup(data);
       }
 
@@ -332,7 +394,11 @@ export default function CoachLineupBuilder({ user }) {
       toast.success("Lineup published!");
     } catch (error) {
       console.error("Error publishing lineup:", error);
-      toast.error("Failed to publish lineup");
+      // Show more detailed error message
+      const errorMessage = error.message || "Failed to publish lineup";
+      const errorDetails = error.details ? `: ${error.details}` : "";
+      const errorHint = error.hint ? ` (${error.hint})` : "";
+      toast.error(`Failed to publish lineup: ${errorMessage}${errorDetails}${errorHint}`);
     } finally {
       setIsPublishing(false);
     }
@@ -631,7 +697,21 @@ export default function CoachLineupBuilder({ user }) {
                               </Button>
                             </div>
                           ) : (
-                            <div className="text-center text-gray-400">
+                            <div className="text-center text-gray-400 relative">
+                              {/* Add delete button for empty slots */}
+                              {benchSlots > substitutes.length && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="absolute top-0 right-0 p-1 h-6 w-6 text-gray-400 hover:text-red-500"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRemoveBenchSlot(index);
+                                  }}
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </Button>
+                              )}
                               <Plus className="w-6 h-6 mx-auto mb-1" />
                               <p className="text-[10px]">Add Player</p>
                             </div>
