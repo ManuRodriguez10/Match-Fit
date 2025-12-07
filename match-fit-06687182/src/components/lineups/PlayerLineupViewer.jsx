@@ -172,15 +172,21 @@ export default function PlayerLineupViewer({ user, initialEventId }) {
     return lineups.find(l => l.event_id === eventId);
   };
 
-  const isPlayerInLineup = (lineup, playerEmail) => {
-    const inStarting = lineup.starting_lineup?.some(p => p.player_email === playerEmail);
-    const inSubs = lineup.substitutes?.includes(playerEmail);
+  const isPlayerInLineup = (lineup, playerEmail, playerId) => {
+    const inStarting = lineup.starting_lineup?.some(p => 
+      (p.player_id && p.player_id === playerId) || 
+      (p.player_email && p.player_email === playerEmail)
+    );
+    const inSubs = lineup.substitutes?.some(sub => 
+      (typeof sub === 'string' && sub === playerEmail) ||
+      (typeof sub === 'string' && sub === playerId)
+    );
     return inStarting || inSubs;
   };
 
-  // New helper function to get player details by email
-  const getPlayerByEmail = (email) => {
-    return teamPlayers.find(p => p.email === email);
+  // New helper function to get player details by email or id
+  const getPlayerByIdentifier = (identifier) => {
+    return teamPlayers.find(p => p.id === identifier || p.email === identifier);
   };
 
   // Check if event is in the past
@@ -246,7 +252,7 @@ export default function PlayerLineupViewer({ user, initialEventId }) {
         <TabsList className="w-full justify-start overflow-x-auto flex-wrap">
           {upcomingEvents.map((event) => {
             const lineup = getLineupForEvent(event.id);
-            const inLineup = lineup ? isPlayerInLineup(lineup, user.email) : false;
+            const inLineup = lineup ? isPlayerInLineup(lineup, user.email, user.id) : false;
             
             return (
               <TabsTrigger key={event.id} value={event.id} className="flex items-center gap-2 text-xs md:text-sm">
@@ -259,8 +265,14 @@ export default function PlayerLineupViewer({ user, initialEventId }) {
 
         {upcomingEvents.map((event) => {
           const lineup = getLineupForEvent(event.id);
-          const inStarting = lineup?.starting_lineup?.some(p => p.player_email === user.email);
-          const inSubs = lineup?.substitutes?.includes(user.email);
+          const inStarting = lineup?.starting_lineup?.some(p => 
+            (p.player_id && p.player_id === user.id) || 
+            (p.player_email && p.player_email === user.email)
+          );
+          const inSubs = lineup?.substitutes?.some(sub => 
+            (typeof sub === 'string' && sub === user.email) ||
+            (typeof sub === 'string' && sub === user.id)
+          );
           const eventIsPast = isEventPast(event.date);
           
           return (
@@ -327,11 +339,13 @@ export default function PlayerLineupViewer({ user, initialEventId }) {
                           {/* Players */}
                           {getFieldPositions(lineup.formation).map((pos) => {
                             const playerAssignment = lineup.starting_lineup?.find(p => p.position === pos.name);
-                            const player = playerAssignment ? getPlayerByEmail(playerAssignment.player_email) : null;
+                            const playerIdentifier = playerAssignment?.player_id || playerAssignment?.player_email;
+                            const player = playerIdentifier ? getPlayerByIdentifier(playerIdentifier) : null;
                             const displayName = player && player.first_name && player.last_name
                               ? `${player.first_name} ${player.last_name}`
-                              : playerAssignment?.player_email || null; // Fallback to email if name not found
-                            const isCurrentPlayer = playerAssignment?.player_email === user.email;
+                              : (playerIdentifier || null); // Fallback to identifier if name not found
+                            const isCurrentPlayer = (playerAssignment?.player_id === user.id) || 
+                              (playerAssignment?.player_email === user.email);
                             
                             return (
                               <div

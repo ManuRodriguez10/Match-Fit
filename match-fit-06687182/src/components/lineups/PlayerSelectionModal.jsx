@@ -7,15 +7,15 @@ import { X, Search } from "lucide-react";
 export default function PlayerSelectionModal({ players, assignedPlayers, onSelect, onClose }) {
   const [searchTerm, setSearchTerm] = useState("");
 
-  const availablePlayers = players.filter(p => !assignedPlayers.has(p.email));
+  const availablePlayers = players.filter(p => !assignedPlayers.has(p.id));
   
   const filteredPlayers = availablePlayers.filter(player => {
     const playerName = player.first_name && player.last_name 
       ? `${player.first_name} ${player.last_name}` 
-      : player.email;
+      : (player.email || `Player ${player.id.slice(0, 8)}`);
     
     return playerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      player.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (player.position || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       player.jersey_number?.toString().includes(searchTerm);
   });
 
@@ -37,7 +37,7 @@ export default function PlayerSelectionModal({ players, assignedPlayers, onSelec
   const renderPlayerButton = (player) => (
     <button
       key={player.id}
-      onClick={() => onSelect(player.email)}
+      onClick={() => onSelect(player.id)}
       className="w-full flex items-center gap-4 p-4 border rounded-lg hover:bg-gray-50 hover:border-[var(--primary-main)] transition-all text-left"
     >
       <div className="w-12 h-12 bg-gradient-to-br from-[var(--primary-main)] to-[var(--primary-dark)] rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
@@ -47,7 +47,7 @@ export default function PlayerSelectionModal({ players, assignedPlayers, onSelec
         <h3 className="font-semibold text-gray-900">
           {player.first_name && player.last_name 
             ? `${player.first_name} ${player.last_name}` 
-            : player.email}
+            : (player.email || `Player ${player.id.slice(0, 8)}`)}
         </h3>
         <p className="text-sm text-gray-600 capitalize">{player.position}</p>
       </div>

@@ -206,19 +206,19 @@ export default function CoachLineupBuilder({ user }) {
     setShowPlayerModal(true);
   };
 
-  const handlePlayerSelect = (playerEmail) => {
+  const handlePlayerSelect = (playerId) => {
     if (selectedPosition === "bench") {
-      if (!substitutes.includes(playerEmail)) {
-        setSubstitutes([...substitutes, playerEmail]);
+      if (!substitutes.includes(playerId)) {
+        setSubstitutes([...substitutes, playerId]);
       }
     } else {
       const existingIndex = startingLineup.findIndex(p => p.position === selectedPosition);
       if (existingIndex >= 0) {
         const updated = [...startingLineup];
-        updated[existingIndex] = { player_email: playerEmail, position: selectedPosition };
+        updated[existingIndex] = { player_id: playerId, position: selectedPosition };
         setStartingLineup(updated);
       } else {
-        setStartingLineup([...startingLineup, { player_email: playerEmail, position: selectedPosition }]);
+        setStartingLineup([...startingLineup, { player_id: playerId, position: selectedPosition }]);
       }
     }
     setShowPlayerModal(false);
@@ -229,14 +229,14 @@ export default function CoachLineupBuilder({ user }) {
     setStartingLineup(startingLineup.filter(p => p.position !== positionName));
   };
 
-  const handleRemoveSub = (playerEmail) => {
-    setSubstitutes(substitutes.filter(email => email !== playerEmail));
+  const handleRemoveSub = (playerId) => {
+    setSubstitutes(substitutes.filter(id => id !== playerId));
   };
 
   const getAssignedPlayers = () => {
     const assigned = new Set();
-    startingLineup.forEach(p => assigned.add(p.player_email));
-    substitutes.forEach(email => assigned.add(email));
+    startingLineup.forEach(p => assigned.add(p.player_id || p.player_email));
+    substitutes.forEach(id => assigned.add(id));
     return assigned;
   };
 
@@ -595,15 +595,15 @@ export default function CoachLineupBuilder({ user }) {
                 <CardContent>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
                     {Array.from({ length: benchSlots }).map((_, index) => {
-                      const playerEmail = substitutes[index];
-                      const player = playerEmail ? players.find(p => p.email === playerEmail) : null;
+                      const playerId = substitutes[index];
+                      const player = playerId ? players.find(p => p.id === playerId) : null;
                       
                       return (
                         <div
                           key={index}
                           className="relative border-2 border-dashed border-gray-300 rounded-lg p-3 hover:border-[var(--primary-main)] transition-colors cursor-pointer"
                           onClick={() => {
-                            if (!playerEmail) {
+                            if (!playerId) {
                               setSelectedPosition("bench");
                               setShowPlayerModal(true);
                             }
@@ -615,7 +615,7 @@ export default function CoachLineupBuilder({ user }) {
                                 {player.jersey_number}
                               </div>
                               <p className="text-xs font-medium truncate">
-                                {player.first_name && player.last_name ? `${player.first_name} ${player.last_name}` : player.email}
+                                {player.first_name && player.last_name ? `${player.first_name} ${player.last_name}` : (player.email || `Player ${player.id.slice(0, 8)}`)}
                               </p>
                               <p className="text-[10px] text-gray-500 capitalize truncate">{player.position}</p>
                               <Button
@@ -624,7 +624,7 @@ export default function CoachLineupBuilder({ user }) {
                                 className="mt-2 w-full text-xs h-7"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleRemoveSub(playerEmail);
+                                  handleRemoveSub(playerId);
                                 }}
                               >
                                 Remove
@@ -673,8 +673,8 @@ export default function CoachLineupBuilder({ user }) {
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
-                      {substitutes.map((playerEmail, index) => {
-                        const player = players.find(p => p.email === playerEmail);
+                      {substitutes.map((playerId, index) => {
+                        const player = players.find(p => p.id === playerId);
                         
                         return player ? (
                           <div key={index} className="border-2 border-gray-300 rounded-lg p-3">
@@ -683,7 +683,7 @@ export default function CoachLineupBuilder({ user }) {
                                 {player.jersey_number}
                               </div>
                               <p className="text-xs font-medium truncate">
-                                {player.first_name && player.last_name ? `${player.first_name} ${player.last_name}` : player.email}
+                                {player.first_name && player.last_name ? `${player.first_name} ${player.last_name}` : (player.email || `Player ${player.id.slice(0, 8)}`)}
                               </p>
                               <p className="text-[10px] text-gray-500 capitalize truncate">{player.position}</p>
                             </div>

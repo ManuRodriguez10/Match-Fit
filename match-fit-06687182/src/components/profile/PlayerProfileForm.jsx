@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "@/api/supabaseClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -105,6 +105,68 @@ export default function PlayerProfileForm({ user, onUpdate }) {
   const [phoneError, setPhoneError] = useState("");
   const [heightError, setHeightError] = useState("");
   const [weightError, setWeightError] = useState("");
+  const [jerseyError, setJerseyError] = useState("");
+  const [takenJerseyNumbers, setTakenJerseyNumbers] = useState([]);
+
+  useEffect(() => {
+    loadTeamJerseyNumbers();
+  }, []);
+
+  const loadTeamJerseyNumbers = async () => {
+    try {
+      if (!user?.team_id) {
+        setTakenJerseyNumbers([]);
+        return;
+      }
+
+      const { data: members, error } = await supabase
+        .from('profiles')
+        .select('id, jersey_number, team_role')
+        .eq('team_id', user.team_id);
+
+      if (error) {
+        console.error("Error loading team jersey numbers:", error);
+        setTakenJerseyNumbers([]);
+        return;
+      }
+
+      const taken = (members || [])
+        .filter(member => 
+          member.team_role === "player" && 
+          member.jersey_number && 
+          member.id !== user.id // Exclude current user
+        )
+        .map(member => parseInt(member.jersey_number))
+        .filter(num => !isNaN(num));
+      
+      setTakenJerseyNumbers(taken);
+    } catch (error) {
+      console.error("Error loading team jersey numbers:", error);
+      setTakenJerseyNumbers([]);
+    }
+  };
+
+  const validateJerseyNumber = (value) => {
+    if (!value) {
+      return "Jersey number is required";
+    }
+    
+    const jerseyNum = parseInt(value);
+    if (isNaN(jerseyNum)) {
+      return "Jersey number must be a valid number";
+    }
+    
+    if (jerseyNum < 1 || jerseyNum > 99) {
+      return "Jersey number must be between 1 and 99";
+    }
+    
+    // Check if the number is taken by another player (excluding current user)
+    if (takenJerseyNumbers.includes(jerseyNum)) {
+      return `Jersey number ${value} is already taken by another player`;
+    }
+    
+    return "";
+  };
 
   const validatePhoneNumber = (countryCode, localNumber) => {
     if (!localNumber.trim()) {
@@ -182,10 +244,23 @@ export default function PlayerProfileForm({ user, onUpdate }) {
       const error = validateWeight(value);
       setWeightError(error);
     }
+
+    if (field === "jersey_number") {
+      const error = validateJerseyNumber(value);
+      setJerseyError(error);
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validate jersey number
+    const jerseyValidation = validateJerseyNumber(formData.jersey_number);
+    if (jerseyValidation) {
+      setJerseyError(jerseyValidation);
+      toast.error(jerseyValidation);
+      return;
+    }
 
     // Validate phone number
     const phoneValidation = validatePhoneNumber(formData.country_code, formData.local_phone_number);
@@ -339,8 +414,18 @@ export default function PlayerProfileForm({ user, onUpdate }) {
                     value={formData.jersey_number}
                     onChange={(e) => handleInputChange("jersey_number", parseInt(e.target.value) || "")}
                     placeholder="e.g., 10"
+                    className={jerseyError ? "border-red-500" : ""}
                     required
                   />
+                  {jerseyError ? (
+                    <p className="text-xs text-red-500">{jerseyError}</p>
+                  ) : takenJerseyNumbers.length > 0 ? (
+                    <p className="text-xs text-gray-500">
+                      Taken numbers: {takenJerseyNumbers.sort((a, b) => a - b).join(", ")}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-gray-500">Enter a number between 1 and 99</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -477,7 +562,7 @@ export default function PlayerProfileForm({ user, onUpdate }) {
             <div className="flex justify-end pt-4">
               <Button
                 type="submit"
-                disabled={isSubmitting || phoneError !== "" || heightError !== "" || weightError !== ""}
+                disabled={isSubmitting || phoneError !== "" || heightError !== "" || weightError !== "" || jerseyError !== ""}
                 className="bg-[var(--primary-main)] hover:bg-[var(--primary-dark)]"
               >
                 {isSubmitting ? (

@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import React, { useState, useEffect } from "react";
+import { supabase } from "@/api/supabaseClient";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,30 @@ const parseLocalDate = (dateString) => {
 
 export default function RosterMemberDetails({ member, currentUser, onClose, onPlayerRemoved }) {
   const [isRemoving, setIsRemoving] = useState(false);
+  const [teamName, setTeamName] = useState(null);
+
+  // Fetch team name when component mounts
+  useEffect(() => {
+    const fetchTeamName = async () => {
+      if (currentUser?.team_id) {
+        try {
+          const { data, error } = await supabase
+            .from('teams')
+            .select('name')
+            .eq('id', currentUser.team_id)
+            .single();
+          
+          if (!error && data) {
+            setTeamName(data.name);
+          }
+        } catch (error) {
+          console.error("Error fetching team name:", error);
+        }
+      }
+    };
+    
+    fetchTeamName();
+  }, [currentUser?.team_id]);
 
   const getMemberDisplayName = () => {
     if (member.first_name && member.last_name) {
@@ -32,22 +56,37 @@ export default function RosterMemberDetails({ member, currentUser, onClose, onPl
 
     setIsRemoving(true);
     try {
-      const response = await base44.functions.invoke('removePlayer', { player_id: member.id });
+      // Use the database function to remove the player (bypasses RLS)
+      const { error } = await supabase.rpc('remove_player_from_team', {
+        player_profile_id: member.id
+      });
+
+      if (error) {
+        console.error("Full Supabase error:", error);
+        console.error("Error code:", error.code);
+        console.error("Error message:", error.message);
+        console.error("Error details:", error.details);
+        console.error("Error hint:", error.hint);
+        throw error;
+      }
+
+      // Show success message with team name
+      const teamNameText = teamName || "the team";
+      toast.success(`${displayName} has been successfully removed from ${teamNameText}`);
       
-      if (response.data.success) {
-        toast.success(`${displayName} has been removed from the team`);
+      // Close modal and refresh after a delay to ensure toast is visible
+      setTimeout(() => {
         onClose();
         if (onPlayerRemoved) {
           onPlayerRemoved();
         }
-      } else {
-        throw new Error(response.data.error || 'Failed to remove player');
-      }
+      }, 500);
     } catch (error) {
       console.error("Error removing player:", error);
       toast.error("Failed to remove player. Please try again.");
+    } finally {
+      setIsRemoving(false);
     }
-    setIsRemoving(false);
   };
 
   const isCoach = currentUser?.team_role === "coach";

@@ -15,7 +15,7 @@ export default function LineupField({
   const getPlayerAtPosition = (positionName) => {
     const assignment = startingLineup.find(p => p.position === positionName);
     if (!assignment) return null;
-    return players.find(p => p.email === assignment.player_email);
+    return players.find(p => p.id === (assignment.player_id || assignment.player_email));
   };
 
   return (
@@ -58,7 +58,7 @@ export default function LineupField({
                   <div className="bg-white px-1.5 md:px-2 py-0.5 rounded shadow-md text-[8px] md:text-[9px] font-medium max-w-[80px] md:max-w-none truncate">
                     {player.first_name && player.last_name 
                       ? `${player.first_name} ${player.last_name}` 
-                      : player.email}
+                      : (player.email || `Player ${player.id.slice(0, 8)}`)}
                   </div>
                 </div>
                 {isEditable && (

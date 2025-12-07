@@ -81,8 +81,14 @@ export default function PlayerDashboard({ user }) {
       setUpcomingLineups(futureLineups.slice(0, 5));
       
       const lineupCount = futureLineups.filter(lineup => 
-        lineup.starting_lineup?.some(player => player.player_email === user.email) ||
-        lineup.substitutes?.includes(user.email)
+        lineup.starting_lineup?.some(player => 
+          (player.player_id && player.player_id === user.id) || 
+          (player.player_email && player.player_email === user.email)
+        ) ||
+        lineup.substitutes?.some(sub => 
+          (typeof sub === 'string' && sub === user.email) ||
+          (typeof sub === 'string' && sub === user.id)
+        )
       ).length;
 
       setPlayerStats({
@@ -201,10 +207,21 @@ export default function PlayerDashboard({ user }) {
             {upcomingLineups.length > 0 ? (
               <div className="space-y-4">
                 {upcomingLineups.map((lineup) => {
-                  const isStarter = lineup.starting_lineup?.some(player => player.player_email === user.email);
-                  const isSubstitute = lineup.substitutes?.includes(user.email);
+                  const isStarter = lineup.starting_lineup?.some(player => 
+                    (player.player_id && player.player_id === user.id) || 
+                    (player.player_email && player.player_email === user.email)
+                  );
+                  const isSubstitute = lineup.substitutes?.some(sub => 
+                    (typeof sub === 'string' && sub === user.email) ||
+                    (typeof sub === 'string' && sub === user.id)
+                  );
                   
                   if (!isStarter && !isSubstitute) return null;
+
+                  const playerAssignment = lineup.starting_lineup?.find(p => 
+                    (p.player_id && p.player_id === user.id) || 
+                    (p.player_email && p.player_email === user.email)
+                  );
 
                   return (
                     <div key={lineup.id} className="p-4 border rounded-lg">
@@ -215,9 +232,9 @@ export default function PlayerDashboard({ user }) {
                         </Badge>
                       </div>
                       <p className="text-sm text-gray-600 mt-1">Formation: {lineup.formation}</p>
-                      {isStarter && (
+                      {isStarter && playerAssignment && (
                         <p className="text-sm text-emerald-600 mt-1">
-                          Position: {lineup.starting_lineup.find(p => p.player_email === user.email)?.position}
+                          Position: {playerAssignment.position}
                         </p>
                       )}
                     </div>
