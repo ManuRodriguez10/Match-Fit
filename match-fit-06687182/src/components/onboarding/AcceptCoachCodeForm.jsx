@@ -49,26 +49,41 @@ export default function AcceptCoachCodeForm({ user, onComplete, onBack }) {
       let targetTeamId = null;
       let coachInviteId = null;
 
-      try {
-        const { data: invite, error: inviteError } = await supabase
-          .from("coach_invites")
-          .select("*")
-          .eq("code", normalizedCode)
-          .eq("used", false)
-          .gt("expires_at", nowIso)
-          .order("expires_at", { ascending: true })
-          .limit(1)
-          .maybeSingle();
+      // First, try to find coach invite
+      const { data: invite, error: inviteError } = await supabase
+        .from("coach_invites")
+        .select("*")
+        .eq("code", normalizedCode)
+        .eq("used", false)
+        .gt("expires_at", nowIso)
+        .order("expires_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
 
-        if (!inviteError && invite) {
-          targetTeamId = invite.team_id;
-          coachInviteId = invite.id;
-        }
-      } catch (inviteLookupError) {
-        console.warn("Coach invite lookup failed:", inviteLookupError.message);
+      // If there's an actual error (not just no results), handle it
+      if (inviteError) {
+        console.error("Error looking up coach invite:", inviteError);
+        console.error("Error details:", {
+          message: inviteError.message,
+          code: inviteError.code,
+          details: inviteError.details,
+          hint: inviteError.hint
+        });
+        // Show more specific error message
+        const errorMsg = inviteError.code === 'PGRST301' || inviteError.message?.includes('permission') 
+          ? "You don't have permission to validate coach codes. Please contact support."
+          : `There was an error validating the coach code: ${inviteError.message}. Please try again.`;
+        setError(errorMsg);
+        setIsSubmitting(false);
+        return;
       }
 
-      if (!targetTeamId) {
+      // If coach invite found, use it
+      if (invite) {
+        targetTeamId = invite.team_id;
+        coachInviteId = invite.id;
+      } else {
+        // Only if no coach invite found, fall back to player code
         const { data: teams, error: teamError } = await supabase
           .from("teams")
           .select("*")
