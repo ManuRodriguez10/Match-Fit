@@ -1,29 +1,36 @@
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { supabase } from "@/api/supabaseClient";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
 import { 
   Calendar,
   Users, 
-  Clipboard,
-  Trophy,
-  AlertTriangle
+  ClipboardList,
+  ArrowRight,
+  Sparkles
 } from "lucide-react";
 import { format, isPast, parseISO } from "date-fns";
+
+import StatCard from "@/components/dashboard/StatCard";
+import EventCard from "@/components/dashboard/EventCard";
+import LineupCard from "@/components/dashboard/LineupCard";
+import ProfileAlert from "@/components/dashboard/ProfileAlert";
+import DashboardBackground from "@/components/dashboard/DashboardBackground";
+import DashboardNav from "@/components/dashboard/DashboardNav";
 
 export default function CoachDashboard({ user }) {
   const location = useLocation();
   const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [teamStats, setTeamStats] = useState({ totalPlayers: 0, activeEvents: 0, publishedLineups: 0 });
   const [recentLineups, setRecentLineups] = useState([]);
-  const coachName =
-    user.full_name ||
-    [user.first_name, user.last_name].filter(Boolean).join(" ") ||
-    user.email;
-  const isProfileIncomplete = !user.first_name || !user.last_name || !user.coach_role || !user.phone;
+  
+  const coachName = user?.full_name || 
+    [user?.first_name, user?.last_name].filter(Boolean).join(" ") || 
+    user?.email || "Coach";
+  const firstName = user?.first_name || coachName.split(" ")[0];
+  const isProfileIncomplete = !user?.first_name || !user?.last_name || !user?.coach_role || !user?.phone;
 
   useEffect(() => {
     loadDashboardData();
@@ -36,6 +43,7 @@ export default function CoachDashboard({ user }) {
       setTeamStats({ totalPlayers: 0, activeEvents: 0, publishedLineups: 0 });
       return;
     }
+    
     try {
       const fetchTable = async (promise, label) => {
         const { data, error } = await promise;
@@ -107,152 +115,172 @@ export default function CoachDashboard({ user }) {
     }
   };
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Coach Dashboard</h1>
-        <p className="text-gray-600 mt-1">
-          Welcome back, {coachName}
-        </p>
-      </div>
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 18) return "Good afternoon";
+    return "Good evening";
+  };
 
-      {isProfileIncomplete && (
-        <Card className="border-amber-200 bg-amber-50">
-          <CardContent className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between py-4">
-            <div className="flex items-start gap-3">
-              <div className="text-amber-600">
-                <AlertTriangle className="w-5 h-5" />
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[#e7f3fe] via-white to-[#e7f3fe] relative overflow-hidden">
+      {/* Animated backgrounds */}
+      <DashboardBackground />
+      
+      {/* Navigation */}
+      <DashboardNav user={user} />
+      
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 space-y-8">
+        
+        {/* Header */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col sm:flex-row sm:items-end justify-between gap-6"
+        >
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <p className="text-slate-600 font-medium text-lg">{getGreeting()}</p>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#118ff3]/10 border border-[#118ff3]/20 text-[#0c5798] text-sm font-medium">
+                <Sparkles className="w-3.5 h-3.5" />
+                Coach
+              </span>
+            </div>
+            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
+              <span className="bg-gradient-to-r from-[#118ff3] to-[#0c5798] bg-clip-text text-transparent">
+                {firstName}
+              </span>
+            </h1>
+          </div>
+          
+          <div className="flex items-center gap-2 text-sm text-slate-500 bg-white/60 backdrop-blur-sm px-4 py-2 rounded-xl border border-slate-200/60">
+            <Calendar className="w-4 h-4 text-[#118ff3]" />
+            <span className="font-medium">{format(new Date(), "EEEE, MMMM d, yyyy")}</span>
+          </div>
+        </motion.div>
+
+        {/* Profile Alert */}
+        {isProfileIncomplete && <ProfileAlert />}
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <StatCard
+            icon={Users}
+            label="Team Players"
+            value={teamStats.totalPlayers}
+            subtitle="Active roster"
+            gradient="bg-gradient-to-br from-[#118ff3] to-[#0c5798]"
+            delay={0}
+          />
+          <StatCard
+            icon={Calendar}
+            label="Upcoming Events"
+            value={teamStats.activeEvents}
+            subtitle="Scheduled ahead"
+            gradient="bg-gradient-to-br from-emerald-500 to-teal-600"
+            delay={0.1}
+          />
+          <StatCard
+            icon={ClipboardList}
+            label="Published Lineups"
+            value={teamStats.publishedLineups}
+            subtitle="Ready for games"
+            gradient="bg-gradient-to-br from-violet-500 to-purple-600"
+            delay={0.2}
+          />
+        </div>
+
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          {/* Upcoming Events - Wider Column */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="lg:col-span-2 bg-white/80 backdrop-blur-xl rounded-3xl border border-white/50 shadow-xl shadow-slate-900/5 overflow-hidden"
+          >
+            <div className="flex items-center justify-between p-6 lg:p-8 border-b border-slate-100">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#118ff3] to-[#0c5798] flex items-center justify-center shadow-lg shadow-[#118ff3]/30">
+                  <Calendar className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900">Upcoming Events</h2>
+                  <p className="text-sm text-slate-500 mt-0.5">Your schedule at a glance</p>
+                </div>
               </div>
-              <div>
-                <p className="font-semibold text-amber-900">Finish setting up your coach profile</p>
-                <p className="text-sm text-amber-800">
-                  Add your name, phone number, role, and experience so players know who is leading the team.
-                </p>
+              <Link to={createPageUrl("Events")}>
+                <Button variant="ghost" className="text-[#118ff3] hover:text-[#0c5798] hover:bg-[#118ff3]/10 rounded-xl group">
+                  View all
+                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </Link>
+            </div>
+            
+            <div className="p-4 lg:p-6 space-y-2">
+              {upcomingEvents.length > 0 ? (
+                upcomingEvents.map((event, index) => (
+                  <EventCard key={event.id} event={event} index={index} />
+                ))
+              ) : (
+                <div className="py-16 text-center">
+                  <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
+                    <Calendar className="w-8 h-8 text-slate-400" />
+                  </div>
+                  <p className="text-slate-600 font-semibold text-lg">No upcoming events</p>
+                  <p className="text-sm text-slate-500 mt-2">Schedule your first event to get started</p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+
+          {/* Recent Lineups - Narrower Column */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="bg-white/80 backdrop-blur-xl rounded-3xl border border-white/50 shadow-xl shadow-slate-900/5 overflow-hidden"
+          >
+            <div className="p-6 lg:p-8 border-b border-slate-100">
+              <div className="flex items-center gap-4 mb-2">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                  <ClipboardList className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900">Recent Lineups</h2>
+                  <p className="text-sm text-slate-500 mt-0.5">Latest configurations</p>
+                </div>
               </div>
             </div>
-            <Link to={createPageUrl("CoachProfile")}>
-              <Button className="bg-amber-600 hover:bg-amber-700 text-white">
-                Complete Profile
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium opacity-90">Team Players</CardTitle>
-            <Users className="h-4 w-4 opacity-90" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{teamStats.totalPlayers}</div>
-            <p className="text-xs opacity-90 mt-1">Active roster members</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium opacity-90">Upcoming Events</CardTitle>
-            <Calendar className="h-4 w-4 opacity-90" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{teamStats.activeEvents}</div>
-            <p className="text-xs opacity-90 mt-1">Scheduled ahead</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium opacity-90">Published Lineups</CardTitle>
-            <Clipboard className="h-4 w-4 opacity-90" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{teamStats.publishedLineups}</div>
-            <p className="text-xs opacity-90 mt-1">For upcoming games</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Upcoming Events */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-[var(--primary-main)]" />
-              Upcoming Events
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {upcomingEvents.length > 0 ? (
-              upcomingEvents.map((event) => (
-                <div key={event.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <h4 className="font-medium">{event.title}</h4>
-                    <p className="text-sm text-gray-600">
-                      {format(new Date(event.date), "MMM d, h:mm a")} • {event.location}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        event.type === "game" ? "bg-red-100 text-red-800" :
-                        event.type === "practice" ? "bg-blue-100 text-blue-800" :
-                        "bg-gray-100 text-gray-800"
-                      }`}>
-                        {event.type}
-                      </span>
-                      {event.opponent && (
-                        <span className="text-xs text-gray-500">vs {event.opponent}</span>
-                      )}
-                    </div>
+            
+            <div className="p-6 space-y-4">
+              {recentLineups.length > 0 ? (
+                recentLineups.map((lineup, index) => (
+                  <LineupCard key={lineup.id} lineup={lineup} index={index} />
+                ))
+              ) : (
+                <div className="py-12 text-center">
+                  <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
+                    <ClipboardList className="w-8 h-8 text-slate-400" />
                   </div>
+                  <p className="text-slate-600 font-semibold">No lineups yet</p>
+                  <p className="text-sm text-slate-500 mt-2">Create your first lineup</p>
                 </div>
-              ))
-            ) : (
-              <p className="text-gray-500 text-center py-4">No upcoming events</p>
-            )}
-            <Link to={createPageUrl("Events")}>
-              <Button variant="outline" className="w-full">View All Events</Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        {/* Latest Lineups */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-[var(--primary-main)]" />
-              Latest Lineups
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {recentLineups.length > 0 ? (
-              recentLineups.map((lineup) => (
-                <div key={lineup.id} className="p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-medium">Game Lineup</h4>
-                      <p className="text-sm text-gray-600 mt-1">
-                        Formation: {lineup.formation}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        {lineup.starting_lineup?.length || 0} starters • {lineup.substitutes?.length || 0} subs
-                      </p>
-                    </div>
-                    <span className="px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-                      Published
-                    </span>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-500 text-center py-4">No upcoming lineups</p>
-            )}
-            <Link to={createPageUrl("Lineups")}>
-              <Button variant="outline" className="w-full">Manage Lineups</Button>
-            </Link>
-          </CardContent>
-        </Card>
+              )}
+              
+              <Link to={createPageUrl("Lineups")} className="block">
+                <Button 
+                  variant="outline" 
+                  className="w-full border-2 border-slate-200 text-slate-700 hover:bg-[#118ff3] hover:text-white hover:border-[#118ff3] rounded-xl font-semibold transition-all group"
+                >
+                  Manage Lineups
+                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </Link>
+            </div>
+          </motion.div>
+        </div>
       </div>
     </div>
   );

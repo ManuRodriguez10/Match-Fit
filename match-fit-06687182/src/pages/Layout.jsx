@@ -125,6 +125,10 @@ function LayoutContent({ children, currentPageName }) {
 
   const navigation = userTeamRole === "coach" ? coachNavigation : playerNavigation;
 
+  // Hide sidebar on Dashboard page (uses navbar instead)
+  const isDashboardPage = currentPageName === "Dashboard";
+  const showSidebar = !isDashboardPage;
+
   return (
     <div className="min-h-screen bg-gray-50">
       <style>{`
@@ -165,8 +169,9 @@ function LayoutContent({ children, currentPageName }) {
         }
       `}</style>
 
-      {/* Mobile Header */}
-      <header className="lg:hidden brand-gradient text-white p-4">
+      {/* Mobile Header - Hidden on Dashboard (uses navbar instead) */}
+      {showSidebar && (
+        <header className="lg:hidden brand-gradient text-white p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
@@ -189,10 +194,12 @@ function LayoutContent({ children, currentPageName }) {
           </Button>
         </div>
       </header>
+      )}
 
       <div className="flex">
-        {/* Desktop Sidebar */}
-        <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 brand-gradient">
+        {/* Desktop Sidebar - Hidden on Dashboard (uses navbar instead) */}
+        {showSidebar && (
+          <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 brand-gradient">
           <div className="flex-1 flex flex-col min-h-0">
             <div className="flex items-center h-16 flex-shrink-0 px-6 text-white">
               <div className="flex items-center gap-3">
@@ -256,9 +263,10 @@ function LayoutContent({ children, currentPageName }) {
             </div>
           </div>
         </aside>
+        )}
 
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
+        {/* Mobile Menu - Hidden on Dashboard (uses navbar instead) */}
+        {showSidebar && mobileMenuOpen && (
           <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={() => setMobileMenuOpen(false)}>
             <div className="fixed inset-y-0 left-0 w-64 brand-gradient animate-slide-in" onClick={(e) => e.stopPropagation()}>
               <div className="flex-1 flex flex-col min-h-0">
@@ -324,8 +332,8 @@ function LayoutContent({ children, currentPageName }) {
         )}
 
         {/* Main Content */}
-        <main className="flex-1 lg:pl-64">
-          <div className="min-h-screen page-gradient">
+        <main className={`flex-1 ${showSidebar ? "lg:pl-64" : ""}`}>
+          <div className={`min-h-screen ${showSidebar ? "page-gradient" : ""}`}>
             {children}
           </div>
         </main>
