@@ -16,7 +16,6 @@ import { format, isPast, parseISO } from "date-fns";
 import StatCard from "@/components/dashboard/StatCard";
 import EventCard from "@/components/dashboard/EventCard";
 import LineupCard from "@/components/dashboard/LineupCard";
-import ProfileAlert from "@/components/dashboard/ProfileAlert";
 import DashboardBackground from "@/components/dashboard/DashboardBackground";
 import DashboardNav from "@/components/dashboard/DashboardNav";
 
@@ -191,9 +190,6 @@ export default function CoachDashboard({ user }) {
             <span className="font-medium">{format(currentDate, "EEEE, MMMM d, yyyy")}</span>
           </div>
         </motion.div>
-
-        {/* Profile Alert */}
-        {isProfileIncomplete && <ProfileAlert />}
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
