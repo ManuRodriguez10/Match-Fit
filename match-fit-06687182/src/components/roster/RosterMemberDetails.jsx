@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/api/supabaseClient";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Mail, Phone, Calendar, Ruler, Weight, Globe, Trash2 } from "lucide-react";
+import { X, Trash2, Mail, Phone, Calendar, Ruler, Weight, Globe, Users, Shield, Target, Zap, TrendingUp } from "lucide-react";
 import { format } from "date-fns";
+import { motion } from "framer-motion";
 import { toast } from "sonner";
 
 // Helper function to parse date string as local date
@@ -12,6 +11,36 @@ const parseLocalDate = (dateString) => {
   if (!dateString) return null;
   const [year, month, day] = dateString.split('-').map(Number);
   return new Date(year, month - 1, day);
+};
+
+const getPositionColor = (position) => {
+  switch (position) {
+    case "goalkeeper":
+      return "bg-gradient-to-br from-blue-500 to-blue-600";
+    case "defender":
+      return "bg-gradient-to-br from-green-500 to-green-600";
+    case "midfielder":
+      return "bg-gradient-to-br from-yellow-500 to-yellow-600";
+    case "forward":
+      return "bg-gradient-to-br from-red-500 to-red-600";
+    default:
+      return "bg-gradient-to-br from-slate-500 to-slate-600";
+  }
+};
+
+const getPositionIcon = (position) => {
+  switch (position) {
+    case "goalkeeper":
+      return <Shield className="w-6 h-6 text-white" />;
+    case "defender":
+      return <Target className="w-6 h-6 text-white" />;
+    case "midfielder":
+      return <Zap className="w-6 h-6 text-white" />;
+    case "forward":
+      return <TrendingUp className="w-6 h-6 text-white" />;
+    default:
+      return <Users className="w-6 h-6 text-white" />;
+  }
 };
 
 export default function RosterMemberDetails({ member, currentUser, onClose, onPlayerRemoved }) {
@@ -45,7 +74,7 @@ export default function RosterMemberDetails({ member, currentUser, onClose, onPl
     if (member.first_name && member.last_name) {
       return `${member.first_name} ${member.last_name}`;
     }
-    return member.email; // Fallback to email if first/last name not available
+    return member.email;
   };
 
   const handleRemovePlayer = async () => {
@@ -56,7 +85,6 @@ export default function RosterMemberDetails({ member, currentUser, onClose, onPl
 
     setIsRemoving(true);
     try {
-      // Use the database function to remove the player (bypasses RLS)
       const { error } = await supabase.rpc('remove_player_from_team', {
         player_profile_id: member.id
       });
@@ -70,11 +98,9 @@ export default function RosterMemberDetails({ member, currentUser, onClose, onPl
         throw error;
       }
 
-      // Show success message with team name
       const teamNameText = teamName || "the team";
       toast.success(`${displayName} has been successfully removed from ${teamNameText}`);
       
-      // Close modal and refresh after a delay to ensure toast is visible
       setTimeout(() => {
         onClose();
         if (onPlayerRemoved) {
@@ -91,52 +117,99 @@ export default function RosterMemberDetails({ member, currentUser, onClose, onPl
 
   const isCoach = currentUser?.team_role === "coach";
   const isPlayer = member.team_role === "player";
+  const isCoachMember = member.team_role === "coach";
+
+  const positionColor = isPlayer && member.position ? getPositionColor(member.position) : "bg-gradient-to-br from-[#118ff3] to-[#0c5798]";
 
   return (
-    <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl">
-            {member.first_name && member.last_name 
-              ? `${member.first_name} ${member.last_name}` 
-              : member.email}
-          </DialogTitle>
-          <div className="flex gap-2 mt-2">
-            <Badge variant="outline" className="capitalize">
-              {member.team_role}
-            </Badge>
-            {isPlayer && member.position && (
-              <Badge variant="outline" className="capitalize">
-                {member.position}
-              </Badge>
-            )}
-            {isPlayer && member.jersey_number && (
-              <Badge variant="outline">
-                #{member.jersey_number}
-              </Badge>
-            )}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-2xl bg-white/90 backdrop-blur-xl rounded-3xl border border-slate-200/50 shadow-2xl shadow-slate-900/20 overflow-hidden flex flex-col max-h-[90vh]"
+      >
+        {/* Gradient accent bar */}
+        <div className={`h-1 ${positionColor}`} />
+        
+        {/* Header */}
+        <div className="p-6 border-b border-slate-200/50">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-4 flex-1 min-w-0">
+              {isPlayer && member.jersey_number ? (
+                <div className={`w-14 h-14 rounded-2xl ${positionColor} flex items-center justify-center text-white font-bold text-lg shadow-lg flex-shrink-0`}>
+                  {member.jersey_number}
+                </div>
+              ) : (
+                <div className={`w-14 h-14 rounded-2xl ${positionColor} flex items-center justify-center text-white shadow-lg flex-shrink-0`}>
+                  {isPlayer && member.position ? getPositionIcon(member.position) : <Users className="w-7 h-7 text-white" />}
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <h2 className="text-2xl font-bold text-slate-900 mb-2">
+                  {member.first_name && member.last_name 
+                    ? `${member.first_name} ${member.last_name}` 
+                    : member.email}
+                </h2>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-700 capitalize">
+                    {member.team_role}
+                  </span>
+                  {isPlayer && member.position && (
+                    <span className="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-700 capitalize">
+                      {member.position}
+                    </span>
+                  )}
+                  {isPlayer && member.jersey_number && (
+                    <span className="px-3 py-1 text-xs font-semibold rounded-full bg-[#118ff3]/10 text-[#118ff3] border border-[#118ff3]/20">
+                      #{member.jersey_number}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={onClose}
+              className="rounded-xl hover:bg-slate-100 flex-shrink-0"
+            >
+              <X className="w-5 h-5" />
+            </Button>
           </div>
-        </DialogHeader>
-
-        <div className="space-y-6 mt-6">
+        </div>
+        
+        {/* Content */}
+        <div className="p-6 space-y-6 overflow-y-auto flex-1">
           {/* Contact Information - Only visible to coaches */}
           {isCoach && (
             <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Contact Information</h3>
+              <h3 className="text-lg font-bold text-slate-900">Contact Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <Mail className="w-5 h-5 text-gray-500" />
-                  <div>
-                    <p className="text-sm text-gray-500">Email</p>
-                    <p className="font-medium">{member.email}</p>
+                <div className="flex items-center gap-3 p-4 bg-white/60 backdrop-blur-sm rounded-xl border border-slate-200/50">
+                  <div className="w-10 h-10 rounded-xl bg-[#118ff3]/10 flex items-center justify-center flex-shrink-0">
+                    <Mail className="w-5 h-5 text-[#118ff3]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-slate-500 mb-1">Email</p>
+                    <p className="font-semibold text-slate-900 truncate">{member.email}</p>
                   </div>
                 </div>
                 {member.phone && (
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <Phone className="w-5 h-5 text-gray-500" />
-                    <div>
-                      <p className="text-sm text-gray-500">Phone</p>
-                      <p className="font-medium">{member.phone}</p>
+                  <div className="flex items-center gap-3 p-4 bg-white/60 backdrop-blur-sm rounded-xl border border-slate-200/50">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                      <Phone className="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-slate-500 mb-1">Phone</p>
+                      <p className="font-semibold text-slate-900">{member.phone}</p>
                     </div>
                   </div>
                 )}
@@ -147,43 +220,51 @@ export default function RosterMemberDetails({ member, currentUser, onClose, onPl
           {/* Player Details */}
           {isPlayer && (
             <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Player Details</h3>
+              <h3 className="text-lg font-bold text-slate-900">Player Details</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {member.date_of_birth && (
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <Calendar className="w-5 h-5 text-gray-500" />
-                    <div>
-                      <p className="text-sm text-gray-500">Date of Birth</p>
-                      <p className="font-medium">
+                  <div className="flex items-center gap-3 p-4 bg-white/60 backdrop-blur-sm rounded-xl border border-slate-200/50">
+                    <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0">
+                      <Calendar className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-slate-500 mb-1">Date of Birth</p>
+                      <p className="font-semibold text-slate-900">
                         {format(parseLocalDate(member.date_of_birth), "MMMM d, yyyy")}
                       </p>
                     </div>
                   </div>
                 )}
                 {member.height && (
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <Ruler className="w-5 h-5 text-gray-500" />
-                    <div>
-                      <p className="text-sm text-gray-500">Height</p>
-                      <p className="font-medium">{member.height}</p>
+                  <div className="flex items-center gap-3 p-4 bg-white/60 backdrop-blur-sm rounded-xl border border-slate-200/50">
+                    <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+                      <Ruler className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-slate-500 mb-1">Height</p>
+                      <p className="font-semibold text-slate-900">{member.height}</p>
                     </div>
                   </div>
                 )}
                 {member.weight && (
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <Weight className="w-5 h-5 text-gray-500" />
-                    <div>
-                      <p className="text-sm text-gray-500">Weight</p>
-                      <p className="font-medium">{member.weight}</p>
+                  <div className="flex items-center gap-3 p-4 bg-white/60 backdrop-blur-sm rounded-xl border border-slate-200/50">
+                    <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center flex-shrink-0">
+                      <Weight className="w-5 h-5 text-orange-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-slate-500 mb-1">Weight</p>
+                      <p className="font-semibold text-slate-900">{member.weight}</p>
                     </div>
                   </div>
                 )}
                 {member.nationality && (
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <Globe className="w-5 h-5 text-gray-500" />
-                    <div>
-                      <p className="text-sm text-gray-500">Nationality</p>
-                      <p className="font-medium">{member.nationality}</p>
+                  <div className="flex items-center gap-3 p-4 bg-white/60 backdrop-blur-sm rounded-xl border border-slate-200/50">
+                    <div className="w-10 h-10 rounded-xl bg-teal-100 flex items-center justify-center flex-shrink-0">
+                      <Globe className="w-5 h-5 text-teal-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-slate-500 mb-1">Nationality</p>
+                      <p className="font-semibold text-slate-900">{member.nationality}</p>
                     </div>
                   </div>
                 )}
@@ -192,20 +273,30 @@ export default function RosterMemberDetails({ member, currentUser, onClose, onPl
           )}
 
           {/* Coach Details */}
-          {member.team_role === "coach" && (
+          {isCoachMember && (
             <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Coaching Details</h3>
+              <h3 className="text-lg font-bold text-slate-900">Coaching Details</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {member.coach_role && (
-                  <div className="p-3 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-500">Role</p>
-                    <p className="font-medium capitalize">{member.coach_role.replace('_', ' ')}</p>
+                  <div className="flex items-center gap-3 p-4 bg-white/60 backdrop-blur-sm rounded-xl border border-slate-200/50">
+                    <div className="w-10 h-10 rounded-xl bg-[#118ff3]/10 flex items-center justify-center flex-shrink-0">
+                      <Users className="w-5 h-5 text-[#118ff3]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-slate-500 mb-1">Role</p>
+                      <p className="font-semibold text-slate-900 capitalize">{member.coach_role.replace('_', ' ')}</p>
+                    </div>
                   </div>
                 )}
                 {member.years_experience && (
-                  <div className="p-3 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-500">Experience</p>
-                    <p className="font-medium">{member.years_experience} years</p>
+                  <div className="flex items-center gap-3 p-4 bg-white/60 backdrop-blur-sm rounded-xl border border-slate-200/50">
+                    <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center flex-shrink-0">
+                      <Calendar className="w-5 h-5 text-violet-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-slate-500 mb-1">Experience</p>
+                      <p className="font-semibold text-slate-900">{member.years_experience} years</p>
+                    </div>
                   </div>
                 )}
               </div>
@@ -214,32 +305,31 @@ export default function RosterMemberDetails({ member, currentUser, onClose, onPl
 
           {/* Remove Player Button (Only for coaches removing players) */}
           {isCoach && isPlayer && onPlayerRemoved && (
-            <div className="pt-4 border-t">
+            <div className="pt-4 border-t border-slate-200/50">
               <Button
-                variant="destructive"
                 onClick={handleRemovePlayer}
                 disabled={isRemoving}
-                className="w-full"
+                className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg shadow-red-500/30 rounded-xl py-3 h-auto"
               >
                 {isRemoving ? (
                   <>
-                    <Trash2 className="w-4 h-4 mr-2 animate-spin" />
+                    <Trash2 className="w-5 h-5 mr-2 animate-spin" />
                     Removing Player...
                   </>
                 ) : (
                   <>
-                    <Trash2 className="w-4 h-4 mr-2" />
+                    <Trash2 className="w-5 h-5 mr-2" />
                     Remove Player from Team
                   </>
                 )}
               </Button>
-              <p className="text-sm text-gray-500 mt-2 text-center">
+              <p className="text-sm text-slate-500 mt-3 text-center">
                 This will remove the player from your team roster
               </p>
             </div>
           )}
         </div>
-      </DialogContent>
-    </Dialog>
+      </motion.div>
+    </motion.div>
   );
 }
