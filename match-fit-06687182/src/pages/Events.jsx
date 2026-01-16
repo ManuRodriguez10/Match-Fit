@@ -61,12 +61,12 @@ export default function EventsPage() {
   }
 
   return (
-    <div className="p-6">
+    <>
       {currentUser.team_role === "coach" ? (
         <CoachEventsView user={currentUser} />
       ) : (
         <PlayerEventsView user={currentUser} />
       )}
-    </div>
+    </>
   );
 }
