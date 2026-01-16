@@ -46,21 +46,20 @@ export default function DashboardNav({ user }) {
   };
 
   return (
-    <nav className="relative z-20 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 shadow-sm">
+    <nav className="relative z-20 bg-white/30 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-14">
           {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#118ff3] to-[#0c5798] flex items-center justify-center shadow-lg shadow-[#118ff3]/30">
-              <LayoutDashboard className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-[#118ff3] to-[#0c5798] bg-clip-text text-transparent">
-              MatchFit
-            </span>
+          <div className="flex items-center">
+            <img
+              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68c332f7b5426ee106687182/32285dc04_MatchFitLogo.png"
+              alt="MatchFit Logo"
+              className="h-10 md:h-12 w-auto"
+            />
           </div>
 
           {/* Navigation Links - Desktop */}
-          <div className="hidden md:flex items-center gap-1">
+          <div className="hidden md:flex items-center gap-0.5">
             {navItems.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.page);
@@ -70,10 +69,10 @@ export default function DashboardNav({ user }) {
                   key={item.page}
                   to={createPageUrl(item.page)}
                   className={`
-                    flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all
+                    flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-sm transition-all
                     ${active 
-                      ? "bg-gradient-to-r from-[#118ff3] to-[#0c5798] text-white shadow-lg shadow-[#118ff3]/30" 
-                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                      ? "bg-[#118ff3] text-white" 
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                     }
                   `}
                 >
@@ -88,7 +87,7 @@ export default function DashboardNav({ user }) {
           <div className="md:hidden">
             <button 
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors"
+              className="p-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -97,7 +96,7 @@ export default function DashboardNav({ user }) {
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <div className="md:hidden pb-4 pt-2 space-y-1 border-t border-slate-200/60 mt-2">
+          <div className="md:hidden pb-4 pt-2 space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.page);
@@ -108,14 +107,14 @@ export default function DashboardNav({ user }) {
                   to={createPageUrl(item.page)}
                   onClick={() => setMobileMenuOpen(false)}
                   className={`
-                    flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-all
+                    flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium text-sm transition-all
                     ${active 
-                      ? "bg-gradient-to-r from-[#118ff3] to-[#0c5798] text-white shadow-lg shadow-[#118ff3]/20" 
-                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                      ? "bg-[#118ff3] text-white" 
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                     }
                   `}
                 >
-                  <Icon className="w-5 h-5" />
+                  <Icon className="w-4 h-4" />
                   {item.name}
                 </Link>
               );

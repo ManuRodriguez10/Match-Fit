@@ -25,12 +25,45 @@ export default function CoachDashboard({ user }) {
   const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [teamStats, setTeamStats] = useState({ totalPlayers: 0, activeEvents: 0, publishedLineups: 0 });
   const [recentLineups, setRecentLineups] = useState([]);
+  const [currentDate, setCurrentDate] = useState(new Date());
   
   const coachName = user?.full_name || 
     [user?.first_name, user?.last_name].filter(Boolean).join(" ") || 
     user?.email || "Coach";
   const firstName = user?.first_name || coachName.split(" ")[0];
   const isProfileIncomplete = !user?.first_name || !user?.last_name || !user?.coach_role || !user?.phone;
+
+  // Auto-update date and greeting
+  useEffect(() => {
+    let dailyInterval = null;
+
+    // Update every minute to catch date changes
+    const interval = setInterval(() => {
+      setCurrentDate(new Date());
+    }, 60000); // Every minute
+
+    // Calculate time until midnight for accurate date change
+    const now = new Date();
+    const midnight = new Date(now);
+    midnight.setHours(24, 0, 0, 0);
+    const msUntilMidnight = midnight - now;
+
+    const midnightTimeout = setTimeout(() => {
+      setCurrentDate(new Date());
+      // After midnight, update once per day
+      dailyInterval = setInterval(() => {
+        setCurrentDate(new Date());
+      }, 86400000); // 24 hours
+    }, msUntilMidnight);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(midnightTimeout);
+      if (dailyInterval) {
+        clearInterval(dailyInterval);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     loadDashboardData();
@@ -116,7 +149,7 @@ export default function CoachDashboard({ user }) {
   };
 
   const getGreeting = () => {
-    const hour = new Date().getHours();
+    const hour = currentDate.getHours();
     if (hour < 12) return "Good morning";
     if (hour < 18) return "Good afternoon";
     return "Good evening";
@@ -155,7 +188,7 @@ export default function CoachDashboard({ user }) {
           
           <div className="flex items-center gap-2 text-sm text-slate-500 bg-white/60 backdrop-blur-sm px-4 py-2 rounded-xl border border-slate-200/60">
             <Calendar className="w-4 h-4 text-[#118ff3]" />
-            <span className="font-medium">{format(new Date(), "EEEE, MMMM d, yyyy")}</span>
+            <span className="font-medium">{format(currentDate, "EEEE, MMMM d, yyyy")}</span>
           </div>
         </motion.div>
 
@@ -198,7 +231,7 @@ export default function CoachDashboard({ user }) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="lg:col-span-2 bg-white/80 backdrop-blur-xl rounded-3xl border border-white/50 shadow-xl shadow-slate-900/5 overflow-hidden"
+            className="lg:col-span-2 bg-white/80 backdrop-blur-xl rounded-3xl border border-slate-200/50 shadow-lg shadow-slate-900/5 overflow-hidden hover:shadow-xl hover:shadow-slate-900/10 hover:border-slate-300/50 transition-all duration-300 hover:-translate-y-1"
           >
             <div className="flex items-center justify-between p-6 lg:p-8 border-b border-slate-100">
               <div className="flex items-center gap-4">
@@ -240,7 +273,7 @@ export default function CoachDashboard({ user }) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="bg-white/80 backdrop-blur-xl rounded-3xl border border-white/50 shadow-xl shadow-slate-900/5 overflow-hidden"
+            className="bg-white/80 backdrop-blur-xl rounded-3xl border border-slate-200/50 shadow-lg shadow-slate-900/5 overflow-hidden hover:shadow-xl hover:shadow-slate-900/10 hover:border-slate-300/50 transition-all duration-300 hover:-translate-y-1"
           >
             <div className="p-6 lg:p-8 border-b border-slate-100">
               <div className="flex items-center gap-4 mb-2">
