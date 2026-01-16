@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Users, Shield, Target, Zap, TrendingUp, ArrowLeft } from "lucide-react";
+import { Users, Shield, Target, Zap, TrendingUp, ArrowLeft, Grid3x3, List } from "lucide-react";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 import RosterMemberDetails from "../components/roster/RosterMemberDetails";
@@ -32,6 +32,7 @@ export default function RosterPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [view, setView] = useState(null); // null = initial, "coaches" = coaches view, "players" = players view
   const [selectedPosition, setSelectedPosition] = useState("all"); // "all", "goalkeeper", "defender", etc.
+  const [viewMode, setViewMode] = useState("card"); // "card" or "list"
 
   useEffect(() => {
     if (currentUser) {
@@ -241,6 +242,71 @@ export default function RosterPage() {
     );
   };
 
+  const renderPlayerListRow = (player, index) => {
+    const parsedDate = parseLocalDate(player.date_of_birth);
+    
+    return (
+      <motion.div
+        key={player.id}
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: index * 0.02 }}
+        whileHover={{ x: 4 }}
+        onClick={() => setSelectedMember(player)}
+        className="group relative bg-white/80 backdrop-blur-xl rounded-xl border border-slate-200/50 shadow-md shadow-slate-900/5 overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-slate-900/10 hover:border-slate-300/80"
+      >
+        {/* Gradient accent bar on left */}
+        <div className={`absolute top-0 left-0 bottom-0 w-1 ${getPositionColor(player.position)}`} />
+        
+        <div className="p-4 flex items-center gap-4">
+          {/* Jersey Number / Icon */}
+          <div className={`w-12 h-12 rounded-xl ${getPositionColor(player.position)} flex items-center justify-center text-white font-bold shadow-lg flex-shrink-0`}>
+            {player.jersey_number || "?"}
+          </div>
+          
+          {/* Player Name and Position */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-3 mb-1">
+              <h3 className="font-bold text-base text-slate-900 group-hover:text-[#118ff3] transition-colors">
+                {player.first_name && player.last_name 
+                  ? `${player.first_name} ${player.last_name}` 
+                  : player.email}
+              </h3>
+              <div className={`w-6 h-6 rounded-lg ${getPositionColor(player.position)}/20 flex items-center justify-center`}>
+                {getPositionIcon(player.position, "w-3 h-3 text-slate-700")}
+              </div>
+              <span className="text-xs text-slate-600 capitalize font-medium">{player.position || "No position"}</span>
+            </div>
+          </div>
+          
+          {/* Details - Horizontal Layout */}
+          <div className="hidden md:flex items-center gap-6 flex-shrink-0">
+            <div className="text-right min-w-[100px]">
+              <p className="text-xs text-slate-500">Date of Birth</p>
+              <p className="text-sm font-semibold text-slate-900">
+                {parsedDate && !isNaN(parsedDate) ? format(parsedDate, "MMM d, yyyy") : "N/A"}
+              </p>
+            </div>
+            <div className="text-right min-w-[80px]">
+              <p className="text-xs text-slate-500">Height</p>
+              <p className="text-sm font-semibold text-slate-900">{player.height || "N/A"}</p>
+            </div>
+            <div className="text-right min-w-[80px]">
+              <p className="text-xs text-slate-500">Weight</p>
+              <p className="text-sm font-semibold text-slate-900">{player.weight || "N/A"}</p>
+            </div>
+            {player.nationality && (
+              <div className="text-right min-w-[120px]">
+                <p className="text-xs text-slate-500">Nationality</p>
+                <p className="text-sm font-semibold text-slate-900">{player.nationality}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </motion.div>
+    );
+  };
+
   const renderCoachCard = (coach, index) => (
     <motion.div
       key={coach.id}
@@ -371,9 +437,9 @@ export default function RosterPage() {
               onClick={() => setView("players")}
               className="group relative bg-white/80 backdrop-blur-xl rounded-3xl border border-slate-200/50 shadow-lg shadow-slate-900/5 overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-slate-900/10 hover:border-slate-300/80 p-8"
             >
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-br from-emerald-500 to-teal-600" />
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-br from-purple-500 to-purple-600" />
               <div className="flex flex-col items-center text-center space-y-4">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/30">
                   <Target className="w-8 h-8 text-white" />
                 </div>
                 <div>
@@ -418,7 +484,7 @@ export default function RosterPage() {
             {/* Position Filter Dropdown */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/30">
                   <Target className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -426,7 +492,34 @@ export default function RosterPage() {
                   <p className="text-sm text-slate-500 mt-0.5">{filteredPlayers.length} {filteredPlayers.length === 1 ? 'player' : 'players'} {selectedPosition !== "all" && `(${selectedPosition})`}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
+                {/* View Toggle */}
+                <div className="bg-white/80 backdrop-blur-xl border border-slate-200/50 rounded-xl p-1 shadow-md flex items-center">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setViewMode("card")}
+                    className={`h-8 w-8 rounded-lg transition-all ${
+                      viewMode === "card" 
+                        ? "bg-gradient-to-r from-[#118ff3] to-[#0c5798] text-white" 
+                        : "text-slate-600 hover:bg-slate-100"
+                    }`}
+                  >
+                    <Grid3x3 className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setViewMode("list")}
+                    className={`h-8 w-8 rounded-lg transition-all ${
+                      viewMode === "list" 
+                        ? "bg-gradient-to-r from-[#118ff3] to-[#0c5798] text-white" 
+                        : "text-slate-600 hover:bg-slate-100"
+                    }`}
+                  >
+                    <List className="w-4 h-4" />
+                  </Button>
+                </div>
                 {/* Color Guide */}
                 <div className="bg-white/80 backdrop-blur-xl border border-slate-200/50 rounded-xl px-4 py-2.5 shadow-md">
                   <div className="flex items-center gap-3 flex-wrap">
@@ -467,11 +560,17 @@ export default function RosterPage() {
               </div>
             </div>
 
-            {/* Players Grid */}
+            {/* Players Grid or List */}
             {filteredPlayers.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredPlayers.map((player, index) => renderPlayerCard(player, index))}
-              </div>
+              viewMode === "card" ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredPlayers.map((player, index) => renderPlayerCard(player, index))}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {filteredPlayers.map((player, index) => renderPlayerListRow(player, index))}
+                </div>
+              )
             ) : (
               <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-slate-200/50 shadow-lg p-12 text-center">
                 <Target className="w-16 h-16 mx-auto text-slate-400 mb-4" />
