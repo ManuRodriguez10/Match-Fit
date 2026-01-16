@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { supabase } from "@/api/supabaseClient";
 import { 
   LayoutDashboard, 
   Calendar, 
@@ -9,7 +10,8 @@ import {
   UserCircle, 
   Settings,
   Menu,
-  X
+  X,
+  LogOut
 } from "lucide-react";
 
 export default function DashboardNav({ user }) {
@@ -43,6 +45,15 @@ export default function DashboardNav({ user }) {
       return currentPath === "/Dashboard" || currentPath === "/" || currentPath === "";
     }
     return currentPath.includes(page) || currentPath === createPageUrl(page);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      window.location.href = createPageUrl("Login");
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
   };
 
   return (
@@ -81,6 +92,15 @@ export default function DashboardNav({ user }) {
                 </Link>
               );
             })}
+            
+            {/* Logout Button - Desktop */}
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-sm transition-all text-white border-2 border-red-600 bg-red-600 hover:bg-red-700 hover:border-red-700 ml-2"
+            >
+              <LogOut className="w-4 h-4" />
+              Logout
+            </button>
           </div>
 
           {/* Mobile Menu Button */}
@@ -119,6 +139,18 @@ export default function DashboardNav({ user }) {
                 </Link>
               );
             })}
+            
+            {/* Logout Button - Mobile */}
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                handleLogout();
+              }}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium text-sm transition-all text-white border-2 border-red-600 bg-red-600 hover:bg-red-700 hover:border-red-700 w-full"
+            >
+              <LogOut className="w-4 h-4" />
+              Logout
+            </button>
           </div>
         )}
       </div>

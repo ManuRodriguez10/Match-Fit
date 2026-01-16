@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 import EventForm from "./EventForm";
 import EventDetails from "./EventDetails";
 import CalendarView from "./CalendarView";
+import WeeklyCalendarView from "./WeeklyCalendarView";
 import DayDetailsModal from "./DayDetailsModal";
 import DashboardBackground from "@/components/dashboard/DashboardBackground";
 import DashboardNav from "@/components/dashboard/DashboardNav";
@@ -281,10 +282,9 @@ export default function CoachEventsView({ user }) {
     );
   };
 
-  // Filter events by time
-  const now = new Date();
-  const weekStart = startOfWeek(now, { weekStartsOn: 1 });
-  const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+  // Filter events by time - use currentDate for automatic updates
+  const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
   
   // Today's events - automatically updates when currentDate changes
   const todayEvents = events.filter(e => {
@@ -292,9 +292,10 @@ export default function CoachEventsView({ user }) {
     return isSameDay(eventDate, currentDate);
   }).sort((a, b) => new Date(a.date) - new Date(b.date));
   
+  // This week's events - automatically updates when currentDate changes
   const thisWeekEvents = events.filter(e => {
     const eventDate = new Date(e.date);
-    return isWithinInterval(eventDate, { start: weekStart, end: weekEnd }) && isFuture(eventDate);
+    return isWithinInterval(eventDate, { start: weekStart, end: weekEnd });
   });
   
   const upcomingEvents = events.filter(e => isFuture(new Date(e.date)));
@@ -516,39 +517,12 @@ export default function CoachEventsView({ user }) {
             </TabsContent>
             
             <TabsContent value="this-week" className="mt-0">
-              {thisWeekEvents.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {thisWeekEvents.map((event, index) => (
-                    <motion.div
-                      key={event.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                    >
-                      {renderEventCard(event)}
-                    </motion.div>
-                  ))}
-                </div>
-              ) : (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-white/80 backdrop-blur-xl rounded-3xl border border-slate-200/50 shadow-lg p-12 text-center"
-                >
-                  <div className="w-20 h-20 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-6">
-                    <Calendar className="w-10 h-10 text-slate-400" />
-                  </div>
-                  <h3 className="text-xl font-bold text-slate-900 mb-2">No events this week</h3>
-                  <p className="text-slate-600 mb-6">There are no events scheduled for this week.</p>
-                  <Button 
-                    className="bg-gradient-to-r from-[#118ff3] to-[#0c5798] hover:from-[#0c5798] hover:to-[#118ff3] text-white rounded-xl"
-                    onClick={() => setShowEventForm(true)}
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create Event
-                  </Button>
-                </motion.div>
-              )}
+              <WeeklyCalendarView 
+                events={thisWeekEvents}
+                currentDate={currentDate}
+                onEventClick={setSelectedEvent}
+                onDayClick={setSelectedDay}
+              />
             </TabsContent>
             
             <TabsContent value="past" className="mt-0">

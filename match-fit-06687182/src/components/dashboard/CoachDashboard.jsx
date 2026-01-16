@@ -135,7 +135,7 @@ export default function CoachDashboard({ user }) {
         }
       }
 
-      setUpcomingEvents(futureEvents.slice(0, 5));
+      setUpcomingEvents(futureEvents.slice(0, 2));
       setRecentLineups(futureLineups.slice(0, 3));
       
       setTeamStats({
