@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Save, Users } from "lucide-react";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
 
 const COUNTRY_CODES = [
   { code: "+1", country: "US/Canada" },
@@ -145,53 +146,64 @@ export default function CoachProfileForm({ user, onUpdate }) {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
-        <p className="text-gray-600 mt-1">Update your coaching information</p>
-      </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 space-y-8">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <div>
+          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-2">
+            <span className="bg-gradient-to-r from-[#118ff3] to-[#0c5798] bg-clip-text text-transparent">
+              My Profile
+            </span>
+          </h1>
+          <p className="text-slate-600 text-lg">Update your coaching information</p>
+        </div>
+      </motion.div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center">
-              <Users className="w-8 h-8 text-white" />
+      <Card className="bg-white/80 backdrop-blur-xl border border-slate-200/50 shadow-lg rounded-3xl">
+        <CardHeader className="border-b border-slate-200/50">
+          <div className="flex items-center gap-4">
+            <div className="w-20 h-20 bg-gradient-to-br from-[#118ff3] to-[#0c5798] rounded-full flex items-center justify-center shadow-lg shadow-[#118ff3]/30">
+              <Users className="w-10 h-10 text-white" />
             </div>
             <div>
-              <CardTitle className="text-2xl">
+              <CardTitle className="text-2xl font-bold text-slate-900">
                 {formData.first_name && formData.last_name 
                   ? `${formData.first_name} ${formData.last_name}` 
                   : user.email}
               </CardTitle>
-              <p className="text-gray-600">{user.email}</p>
-              <p className="text-sm text-gray-500 mt-1">{getCoachRoleDisplay(formData.coach_role)}</p>
+              <p className="text-slate-600 mt-1">{user.email}</p>
+              <p className="text-sm text-slate-500 mt-1">{getCoachRoleDisplay(formData.coach_role)}</p>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Personal Information */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h3>
+              <h3 className="text-lg font-bold text-slate-900 mb-4">Personal Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="first_name">First Name *</Label>
+                  <Label htmlFor="first_name" className="text-slate-700 font-medium">First Name *</Label>
                   <Input
                     id="first_name"
                     value={formData.first_name}
                     onChange={(e) => handleInputChange("first_name", e.target.value)}
                     placeholder="John"
+                    className="rounded-xl"
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="last_name">Last Name *</Label>
+                  <Label htmlFor="last_name" className="text-slate-700 font-medium">Last Name *</Label>
                   <Input
                     id="last_name"
                     value={formData.last_name}
                     onChange={(e) => handleInputChange("last_name", e.target.value)}
                     placeholder="Doe"
+                    className="rounded-xl"
                     required
                   />
                 </div>
@@ -200,15 +212,15 @@ export default function CoachProfileForm({ user, onUpdate }) {
 
             {/* Contact Information */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
+              <h3 className="text-lg font-bold text-slate-900 mb-4">Contact Information</h3>
               <div className="space-y-2">
-                <Label>Phone Number *</Label>
+                <Label className="text-slate-700 font-medium">Phone Number *</Label>
                 <div className="flex gap-2">
                   <Select 
                     value={formData.country_code} 
                     onValueChange={(value) => handleInputChange("country_code", value)}
                   >
-                    <SelectTrigger className="w-[140px]">
+                    <SelectTrigger className="w-[140px] rounded-xl">
                       <SelectValue placeholder="Code" />
                     </SelectTrigger>
                     <SelectContent>
@@ -225,29 +237,29 @@ export default function CoachProfileForm({ user, onUpdate }) {
                     value={formData.local_phone_number}
                     onChange={(e) => handleInputChange("local_phone_number", e.target.value)}
                     placeholder="5551234567"
-                    className={phoneError ? "border-red-500 flex-1" : "flex-1"}
+                    className={`rounded-xl flex-1 ${phoneError ? "border-red-500" : ""}`}
                     required
                   />
                 </div>
                 {phoneError ? (
                   <p className="text-xs text-red-500">{phoneError}</p>
                 ) : (
-                  <p className="text-xs text-gray-500">Select your country code and enter your phone number</p>
+                  <p className="text-xs text-slate-500">Select your country code and enter your phone number</p>
                 )}
               </div>
             </div>
 
             {/* Coaching Information */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Coaching Information</h3>
+              <h3 className="text-lg font-bold text-slate-900 mb-4">Coaching Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="coach_role">Coach Role *</Label>
+                  <Label htmlFor="coach_role" className="text-slate-700 font-medium">Coach Role *</Label>
                   <Select 
                     value={formData.coach_role} 
                     onValueChange={(value) => handleInputChange("coach_role", value)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="rounded-xl">
                       <SelectValue placeholder="Select your role" />
                     </SelectTrigger>
                     <SelectContent>
@@ -258,7 +270,7 @@ export default function CoachProfileForm({ user, onUpdate }) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="years_experience">Years of Coaching Experience *</Label>
+                  <Label htmlFor="years_experience" className="text-slate-700 font-medium">Years of Coaching Experience *</Label>
                   <Input
                     id="years_experience"
                     type="number"
@@ -267,6 +279,7 @@ export default function CoachProfileForm({ user, onUpdate }) {
                     value={formData.years_experience}
                     onChange={(e) => handleInputChange("years_experience", parseInt(e.target.value) || "")}
                     placeholder="e.g., 5"
+                    className="rounded-xl"
                     required
                   />
                 </div>
@@ -277,7 +290,7 @@ export default function CoachProfileForm({ user, onUpdate }) {
               <Button
                 type="submit"
                 disabled={isSubmitting || phoneError !== ""}
-                className="bg-[var(--primary-main)] hover:bg-[var(--primary-dark)]"
+                className="bg-gradient-to-r from-[#118ff3] to-[#0c5798] hover:from-[#0c5798] hover:to-[#118ff3] text-white rounded-xl shadow-lg shadow-[#118ff3]/30 px-6 py-6 h-auto"
               >
                 {isSubmitting ? (
                   <>

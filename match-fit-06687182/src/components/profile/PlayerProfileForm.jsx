@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Save } from "lucide-react";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
 
 const COUNTRIES = [
   "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina",
@@ -330,52 +331,63 @@ export default function PlayerProfileForm({ user, onUpdate }) {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
-        <p className="text-gray-600 mt-1">Update your personal information</p>
-      </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 space-y-8">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <div>
+          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-2">
+            <span className="bg-gradient-to-r from-[#118ff3] to-[#0c5798] bg-clip-text text-transparent">
+              My Profile
+            </span>
+          </h1>
+          <p className="text-slate-600 text-lg">Update your personal information</p>
+        </div>
+      </motion.div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="w-16 h-16 bg-gradient-to-br from-[var(--primary-main)] to-[var(--primary-dark)] rounded-full flex items-center justify-center text-white font-bold text-2xl">
+      <Card className="bg-white/80 backdrop-blur-xl border border-slate-200/50 shadow-lg rounded-3xl">
+        <CardHeader className="border-b border-slate-200/50">
+          <div className="flex items-center gap-4">
+            <div className="w-20 h-20 bg-gradient-to-br from-[#118ff3] to-[#0c5798] rounded-full flex items-center justify-center text-white font-bold text-3xl shadow-lg shadow-[#118ff3]/30">
               {formData.jersey_number || "?"}
             </div>
             <div>
-              <CardTitle className="text-2xl">
+              <CardTitle className="text-2xl font-bold text-slate-900">
                 {formData.first_name && formData.last_name
                   ? `${formData.first_name} ${formData.last_name}`
                   : user.email}
               </CardTitle>
-              <p className="text-gray-600">{user.email}</p>
+              <p className="text-slate-600 mt-1">{user.email}</p>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Name Fields */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h3>
+              <h3 className="text-lg font-bold text-slate-900 mb-4">Personal Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="first_name">First Name *</Label>
+                  <Label htmlFor="first_name" className="text-slate-700 font-medium">First Name *</Label>
                   <Input
                     id="first_name"
                     value={formData.first_name}
                     onChange={(e) => handleInputChange("first_name", e.target.value)}
                     placeholder="John"
+                    className="rounded-xl"
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="last_name">Last Name *</Label>
+                  <Label htmlFor="last_name" className="text-slate-700 font-medium">Last Name *</Label>
                   <Input
                     id="last_name"
                     value={formData.last_name}
                     onChange={(e) => handleInputChange("last_name", e.target.value)}
                     placeholder="Doe"
+                    className="rounded-xl"
                     required
                   />
                 </div>
@@ -384,15 +396,15 @@ export default function PlayerProfileForm({ user, onUpdate }) {
 
             {/* Player Information */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Player Information</h3>
+              <h3 className="text-lg font-bold text-slate-900 mb-4">Player Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="position">Position *</Label>
+                  <Label htmlFor="position" className="text-slate-700 font-medium">Position *</Label>
                   <Select
                     value={formData.position}
                     onValueChange={(value) => handleInputChange("position", value)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="rounded-xl">
                       <SelectValue placeholder="Select your position" />
                     </SelectTrigger>
                     <SelectContent>
@@ -405,7 +417,7 @@ export default function PlayerProfileForm({ user, onUpdate }) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="jersey_number">Jersey Number *</Label>
+                  <Label htmlFor="jersey_number" className="text-slate-700 font-medium">Jersey Number *</Label>
                   <Input
                     id="jersey_number"
                     type="number"
@@ -414,17 +426,17 @@ export default function PlayerProfileForm({ user, onUpdate }) {
                     value={formData.jersey_number}
                     onChange={(e) => handleInputChange("jersey_number", parseInt(e.target.value) || "")}
                     placeholder="e.g., 10"
-                    className={jerseyError ? "border-red-500" : ""}
+                    className={`rounded-xl ${jerseyError ? "border-red-500" : ""}`}
                     required
                   />
                   {jerseyError ? (
                     <p className="text-xs text-red-500">{jerseyError}</p>
                   ) : takenJerseyNumbers.length > 0 ? (
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-slate-500">
                       Taken numbers: {takenJerseyNumbers.sort((a, b) => a - b).join(", ")}
                     </p>
                   ) : (
-                    <p className="text-xs text-gray-500">Enter a number between 1 and 99</p>
+                    <p className="text-xs text-slate-500">Enter a number between 1 and 99</p>
                   )}
                 </div>
               </div>
@@ -432,15 +444,15 @@ export default function PlayerProfileForm({ user, onUpdate }) {
 
             {/* Contact Information */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
+              <h3 className="text-lg font-bold text-slate-900 mb-4">Contact Information</h3>
               <div className="space-y-2">
-                <Label>Phone Number *</Label>
+                <Label className="text-slate-700 font-medium">Phone Number *</Label>
                 <div className="flex gap-2">
                   <Select 
                     value={formData.country_code} 
                     onValueChange={(value) => handleInputChange("country_code", value)}
                   >
-                    <SelectTrigger className="w-[140px]">
+                    <SelectTrigger className="w-[140px] rounded-xl">
                       <SelectValue placeholder="Code" />
                     </SelectTrigger>
                     <SelectContent>
@@ -457,35 +469,36 @@ export default function PlayerProfileForm({ user, onUpdate }) {
                     value={formData.local_phone_number}
                     onChange={(e) => handleInputChange("local_phone_number", e.target.value)}
                     placeholder="5551234567"
-                    className={phoneError ? "border-red-500 flex-1" : "flex-1"}
+                    className={`rounded-xl flex-1 ${phoneError ? "border-red-500" : ""}`}
                     required
                   />
                 </div>
                 {phoneError ? (
                   <p className="text-xs text-red-500">{phoneError}</p>
                 ) : (
-                  <p className="text-xs text-gray-500">Select your country code and enter your phone number</p>
+                  <p className="text-xs text-slate-500">Select your country code and enter your phone number</p>
                 )}
               </div>
             </div>
 
             {/* Physical Stats */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Physical Stats</h3>
+              <h3 className="text-lg font-bold text-slate-900 mb-4">Physical Stats</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="date_of_birth">Date of Birth *</Label>
+                  <Label htmlFor="date_of_birth" className="text-slate-700 font-medium">Date of Birth *</Label>
                   <Input
                     id="date_of_birth"
                     type="date"
                     value={formData.date_of_birth}
                     onChange={(e) => handleInputChange("date_of_birth", e.target.value)}
+                    className="rounded-xl"
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Height *</Label>
+                  <Label className="text-slate-700 font-medium">Height *</Label>
                   <div className="flex gap-2">
                     <Input
                       id="height_feet"
@@ -495,7 +508,7 @@ export default function PlayerProfileForm({ user, onUpdate }) {
                       value={formData.height_feet}
                       onChange={(e) => handleInputChange("height_feet", e.target.value)}
                       placeholder="Feet"
-                      className={heightError ? "border-red-500" : ""}
+                      className={`rounded-xl ${heightError ? "border-red-500" : ""}`}
                       required
                     />
                     <Input
@@ -506,31 +519,31 @@ export default function PlayerProfileForm({ user, onUpdate }) {
                       value={formData.height_inches}
                       onChange={(e) => handleInputChange("height_inches", e.target.value)}
                       placeholder="Inches"
-                      className={heightError ? "border-red-500" : ""}
+                      className={`rounded-xl ${heightError ? "border-red-500" : ""}`}
                       required
                     />
                   </div>
                   {heightError ? (
                     <p className="text-xs text-red-500">{heightError}</p>
                   ) : (
-                    <p className="text-xs text-gray-500">Feet (3-8) and inches (0-11)</p>
+                    <p className="text-xs text-slate-500">Feet (3-8) and inches (0-11)</p>
                   )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="weight">Weight (lbs) *</Label>
+                  <Label htmlFor="weight" className="text-slate-700 font-medium">Weight (lbs) *</Label>
                   <Input
                     id="weight"
                     value={formData.weight}
                     onChange={(e) => handleInputChange("weight", e.target.value)}
                     placeholder="e.g., 165"
-                    className={weightError ? "border-red-500" : ""}
+                    className={`rounded-xl ${weightError ? "border-red-500" : ""}`}
                     required
                   />
                   {weightError ? (
                     <p className="text-xs text-red-500">{weightError}</p>
                   ) : (
-                    <p className="text-xs text-gray-500">In pounds</p>
+                    <p className="text-xs text-slate-500">In pounds</p>
                   )}
                 </div>
               </div>
@@ -538,14 +551,14 @@ export default function PlayerProfileForm({ user, onUpdate }) {
 
             {/* Additional Information */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Additional Information</h3>
+              <h3 className="text-lg font-bold text-slate-900 mb-4">Additional Information</h3>
               <div className="space-y-2">
-                <Label htmlFor="nationality">Nationality *</Label>
+                <Label htmlFor="nationality" className="text-slate-700 font-medium">Nationality *</Label>
                 <Select
                   value={formData.nationality}
                   onValueChange={(value) => handleInputChange("nationality", value)}
                 >
-                  <SelectTrigger id="nationality">
+                  <SelectTrigger id="nationality" className="rounded-xl">
                     <SelectValue placeholder="Select your country" />
                   </SelectTrigger>
                   <SelectContent>
@@ -563,7 +576,7 @@ export default function PlayerProfileForm({ user, onUpdate }) {
               <Button
                 type="submit"
                 disabled={isSubmitting || phoneError !== "" || heightError !== "" || weightError !== "" || jerseyError !== ""}
-                className="bg-[var(--primary-main)] hover:bg-[var(--primary-dark)]"
+                className="bg-gradient-to-r from-[#118ff3] to-[#0c5798] hover:from-[#0c5798] hover:to-[#118ff3] text-white rounded-xl shadow-lg shadow-[#118ff3]/30 px-6 py-6 h-auto"
               >
                 {isSubmitting ? (
                   <>
