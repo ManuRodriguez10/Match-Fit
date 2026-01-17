@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import { supabase } from "@/api/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Calendar, MapPin, Users, Clock } from "lucide-react";
+import { Plus, Calendar, MapPin, Users, Clock, Trash2 } from "lucide-react";
 import { format, isFuture, isPast, startOfWeek, endOfWeek, isWithinInterval, isSameDay } from "date-fns";
 import { motion } from "framer-motion";
 import EventForm from "./EventForm";
@@ -24,6 +24,7 @@ export default function CoachEventsView({ user }) {
   const [initialEventDate, setInitialEventDate] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [activeTab, setActiveTab] = useState("calendar");
   const location = useLocation();
 
   useEffect(() => {
@@ -167,6 +168,37 @@ export default function CoachEventsView({ user }) {
     } catch (error) {
       console.error("Error deleting event:", error);
       toast.error("There was an error deleting the event. Please try again.");
+    }
+  };
+
+  const handleClearAllPastEvents = async () => {
+    if (pastEvents.length === 0) {
+      return;
+    }
+
+    const confirmMessage = `Are you sure you want to delete all ${pastEvents.length} past event${pastEvents.length === 1 ? '' : 's'}? This action cannot be undone.`;
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+    
+    try {
+      const pastEventIds = pastEvents.map(e => e.id);
+      const { error } = await supabase
+        .from("events")
+        .delete()
+        .in("id", pastEventIds);
+
+      if (error) {
+        throw error;
+      }
+
+      setSelectedEvent(null);
+      setSelectedDay(null);
+      loadEvents();
+      toast.success(`Successfully deleted ${pastEvents.length} past event${pastEvents.length === 1 ? '' : 's'}.`);
+    } catch (error) {
+      console.error("Error clearing past events:", error);
+      toast.error("There was an error clearing past events. Please try again.");
     }
   };
 
@@ -420,33 +452,46 @@ export default function CoachEventsView({ user }) {
 
         {/* Event List */}
         {!showEventForm && !selectedEvent && (
-          <Tabs defaultValue="calendar" className="space-y-6">
-            <TabsList className="bg-white/80 backdrop-blur-xl border border-slate-200/50 rounded-2xl p-1.5 h-auto">
-              <TabsTrigger 
-                value="calendar"
-                className="rounded-xl px-6 py-2.5 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#118ff3] data-[state=active]:to-[#0c5798] data-[state=active]:text-white"
-              >
-                Calendar ({events.length})
-              </TabsTrigger>
-              <TabsTrigger 
-                value="today"
-                className="rounded-xl px-6 py-2.5 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#118ff3] data-[state=active]:to-[#0c5798] data-[state=active]:text-white"
-              >
-                Today ({todayEvents.length})
-              </TabsTrigger>
-              <TabsTrigger 
-                value="this-week" 
-                className="rounded-xl px-6 py-2.5 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#118ff3] data-[state=active]:to-[#0c5798] data-[state=active]:text-white"
-              >
-                This Week ({thisWeekEvents.length})
-              </TabsTrigger>
-              <TabsTrigger 
-                value="past"
-                className="rounded-xl px-6 py-2.5 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#118ff3] data-[state=active]:to-[#0c5798] data-[state=active]:text-white"
-              >
-                Past ({pastEvents.length})
-              </TabsTrigger>
-            </TabsList>
+          <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="calendar" className="space-y-6">
+            <div className="flex items-center justify-between gap-4">
+              <TabsList className="bg-white/80 backdrop-blur-xl border border-slate-200/50 rounded-2xl p-1.5 h-auto">
+                <TabsTrigger 
+                  value="calendar"
+                  className="rounded-xl px-6 py-2.5 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#118ff3] data-[state=active]:to-[#0c5798] data-[state=active]:text-white"
+                >
+                  Calendar ({events.length})
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="today"
+                  className="rounded-xl px-6 py-2.5 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#118ff3] data-[state=active]:to-[#0c5798] data-[state=active]:text-white"
+                >
+                  Today ({todayEvents.length})
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="this-week" 
+                  className="rounded-xl px-6 py-2.5 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#118ff3] data-[state=active]:to-[#0c5798] data-[state=active]:text-white"
+                >
+                  This Week ({thisWeekEvents.length})
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="past"
+                  className="rounded-xl px-6 py-2.5 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#118ff3] data-[state=active]:to-[#0c5798] data-[state=active]:text-white"
+                >
+                  Past ({pastEvents.length})
+                </TabsTrigger>
+              </TabsList>
+              
+              {/* Clear All Past Events Button - only show on Past tab */}
+              {activeTab === "past" && pastEvents.length > 0 && (
+                <Button
+                  onClick={handleClearAllPastEvents}
+                  className="bg-red-600 hover:bg-red-700 text-white border border-red-600 hover:border-red-700 shadow-lg shadow-red-600/30 rounded-xl px-4 py-2.5 h-auto text-sm font-medium transition-all"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Clear all past events
+                </Button>
+              )}
+            </div>
             
             <TabsContent value="today" className="mt-0">
               {todayEvents.length > 0 ? (
