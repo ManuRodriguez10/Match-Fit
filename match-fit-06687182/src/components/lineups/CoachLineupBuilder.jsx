@@ -12,6 +12,7 @@ import PlayerSelectionModal from "./PlayerSelectionModal";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { motion } from "framer-motion";
 
 export default function CoachLineupBuilder({ user }) {
   const location = useLocation();
@@ -463,91 +464,123 @@ export default function CoachLineupBuilder({ user }) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-[var(--primary-main)]" />
+        <Loader2 className="w-8 h-8 animate-spin text-[#118ff3]" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Lineup Builder</h1>
-          <p className="text-gray-600 mt-1">Create and manage game lineups</p>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Link to={createPageUrl("Events")}>
-            <Button variant="outline" className="w-full sm:w-auto">
-              <Plus className="w-4 h-4 mr-2" />
-              Add New Game
-            </Button>
-          </Link>
-          {existingLineup && !isSelectedEventPast && (
-            <Button variant="destructive" onClick={handleDeleteLineup} className="w-full sm:w-auto">
-              <Trash2 className="w-4 h-4 mr-2" />
-              Delete Lineup
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {existingLineup?.published && (
-        <Alert className="bg-green-50 border-green-200">
-          <CheckCircle className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-800">
-            This lineup has been published and players have been notified.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {isSelectedEventPast && (
-        <Alert className="bg-amber-50 border-amber-200">
-          <Calendar className="h-4 w-4 text-amber-600" />
-          <AlertDescription className="text-amber-800">
-            This game has already passed. Lineups cannot be created or edited for past events.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {events.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Calendar className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-            <p className="text-gray-600 mb-6">No game events scheduled. Create a game event first to build a lineup.</p>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 space-y-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-6"
+        >
+          <div>
+            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-2">
+              <span className="bg-gradient-to-r from-[#118ff3] to-[#0c5798] bg-clip-text text-transparent">
+                Lineup Builder
+              </span>
+            </h1>
+            <p className="text-slate-600 text-lg">Create and manage game lineups</p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3">
             <Link to={createPageUrl("Events")}>
-              <Button className="bg-[var(--primary-main)] hover:bg-[var(--primary-dark)]">
+              <Button className="bg-gradient-to-r from-[#118ff3] to-[#0c5798] hover:from-[#0c5798] hover:to-[#118ff3] text-white rounded-xl px-6 py-6 h-auto shadow-lg shadow-[#118ff3]/30">
+                <Plus className="w-5 h-5 mr-2" />
+                Add New Game
+              </Button>
+            </Link>
+            {existingLineup && !isSelectedEventPast && (
+              <Button 
+                onClick={handleDeleteLineup} 
+                className="bg-red-600 hover:bg-red-700 text-white border border-red-600 hover:border-red-700 rounded-xl px-6 py-6 h-auto shadow-lg"
+              >
+                <Trash2 className="w-5 h-5 mr-2" />
+                Delete Lineup
+              </Button>
+            )}
+          </div>
+        </motion.div>
+
+        {existingLineup?.published && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-green-50/80 backdrop-blur-xl border border-green-200/50 rounded-2xl p-4 shadow-lg"
+          >
+            <div className="flex items-center gap-3">
+              <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+              <p className="text-green-800 font-medium">
+                This lineup has been published and players have been notified.
+              </p>
+            </div>
+          </motion.div>
+        )}
+
+        {isSelectedEventPast && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-amber-50/80 backdrop-blur-xl border border-amber-200/50 rounded-2xl p-4 shadow-lg"
+          >
+            <div className="flex items-center gap-3">
+              <Calendar className="h-5 w-5 text-amber-600 flex-shrink-0" />
+              <p className="text-amber-800 font-medium">
+                This game has already passed. Lineups cannot be created or edited for past events.
+              </p>
+            </div>
+          </motion.div>
+        )}
+
+        {events.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white/80 backdrop-blur-xl rounded-3xl border border-slate-200/50 shadow-lg p-12 text-center"
+          >
+            <div className="w-20 h-20 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-6">
+              <Calendar className="w-10 h-10 text-slate-400" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 mb-2">No game events scheduled</h3>
+            <p className="text-slate-600 mb-6">Create a game event first to build a lineup.</p>
+            <Link to={createPageUrl("Events")}>
+              <Button className="bg-gradient-to-r from-[#118ff3] to-[#0c5798] hover:from-[#0c5798] hover:to-[#118ff3] text-white rounded-xl shadow-lg shadow-[#118ff3]/30">
                 <Plus className="w-4 h-4 mr-2" />
                 Schedule a Game
               </Button>
             </Link>
-          </CardContent>
-        </Card>
-      ) : upcomingEvents.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Calendar className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-            <p className="text-gray-600 mb-2 font-medium">No upcoming games available</p>
-            <p className="text-gray-500 text-sm mb-6">All scheduled games have already passed. Lineups can only be created for future games.</p>
+          </motion.div>
+        ) : upcomingEvents.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white/80 backdrop-blur-xl rounded-3xl border border-slate-200/50 shadow-lg p-12 text-center"
+          >
+            <div className="w-20 h-20 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-6">
+              <Calendar className="w-10 h-10 text-slate-400" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 mb-2">No upcoming games available</h3>
+            <p className="text-slate-600 mb-6">All scheduled games have already passed. Lineups can only be created for future games.</p>
             <Link to={createPageUrl("Events")}>
-              <Button className="bg-[var(--primary-main)] hover:bg-[var(--primary-dark)]">
+              <Button className="bg-gradient-to-r from-[#118ff3] to-[#0c5798] hover:from-[#0c5798] hover:to-[#118ff3] text-white rounded-xl shadow-lg shadow-[#118ff3]/30">
                 <Plus className="w-4 h-4 mr-2" />
                 Schedule a New Game
               </Button>
             </Link>
-          </CardContent>
-        </Card>
-      ) : (
+          </motion.div>
+        ) : (
         <>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Game Selection</CardTitle>
+            <Card className="bg-white/80 backdrop-blur-xl border border-slate-200/50 shadow-lg rounded-3xl">
+              <CardHeader className="border-b border-slate-200/50">
+                <CardTitle className="text-xl font-bold text-slate-900">Game Selection</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 pt-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Select Game</label>
+                  <label className="text-sm font-medium text-slate-700">Select Game</label>
                   <Select value={selectedEventId} onValueChange={setSelectedEventId}>
-                    <SelectTrigger>
+                    <SelectTrigger className="rounded-xl">
                       <SelectValue placeholder="Choose a game..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -558,20 +591,20 @@ export default function CoachLineupBuilder({ user }) {
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-gray-500">Only upcoming games are available for lineup creation</p>
+                  <p className="text-xs text-slate-500">Only upcoming games are available for lineup creation</p>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Formation</CardTitle>
+            <Card className="bg-white/80 backdrop-blur-xl border border-slate-200/50 shadow-lg rounded-3xl">
+              <CardHeader className="border-b border-slate-200/50">
+                <CardTitle className="text-xl font-bold text-slate-900">Formation</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 pt-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Select Formation</label>
+                  <label className="text-sm font-medium text-slate-700">Select Formation</label>
                   <Select value={formation} onValueChange={setFormation} disabled={isSelectedEventPast}>
-                    <SelectTrigger>
+                    <SelectTrigger className="rounded-xl">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -589,12 +622,11 @@ export default function CoachLineupBuilder({ user }) {
 
           {selectedEventId && !isSelectedEventPast && (
             <>
-              <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <Button
                   onClick={handleClearLineup}
                   disabled={isSaving || isPublishing || (startingLineup.length === 0 && substitutes.length === 0)}
-                  variant="outline"
-                  className="flex-1"
+                  className="flex-1 bg-white/80 backdrop-blur-xl border border-slate-200/50 text-slate-700 hover:bg-white hover:border-slate-300 rounded-xl px-6 py-6 h-auto shadow-lg"
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Clear Lineup
@@ -602,8 +634,7 @@ export default function CoachLineupBuilder({ user }) {
                 <Button
                   onClick={handleSaveDraft}
                   disabled={isSaving || isPublishing}
-                  variant="outline"
-                  className="flex-1"
+                  className="flex-1 bg-white/80 backdrop-blur-xl border border-slate-200/50 text-slate-700 hover:bg-white hover:border-slate-300 rounded-xl px-6 py-6 h-auto shadow-lg"
                 >
                   {isSaving ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -615,7 +646,7 @@ export default function CoachLineupBuilder({ user }) {
                 <Button
                   onClick={handlePublish}
                   disabled={isSaving || isPublishing || startingLineup.length !== 11}
-                  className="flex-1 bg-[var(--primary-main)] hover:bg-[var(--primary-dark)]"
+                  className="flex-1 bg-gradient-to-r from-[#118ff3] to-[#0c5798] hover:from-[#0c5798] hover:to-[#118ff3] text-white rounded-xl px-6 py-6 h-auto shadow-lg shadow-[#118ff3]/30"
                 >
                   {isPublishing ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -626,11 +657,11 @@ export default function CoachLineupBuilder({ user }) {
                 </Button>
               </div>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Starting Lineup ({startingLineup.length}/11)</CardTitle>
+              <Card className="bg-white/80 backdrop-blur-xl border border-slate-200/50 shadow-lg rounded-3xl">
+                <CardHeader className="border-b border-slate-200/50">
+                  <CardTitle className="text-xl font-bold text-slate-900">Starting Lineup ({startingLineup.length}/11)</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-6">
                   <div className="w-full mx-auto lg:max-w-4xl xl:max-w-5xl">
                     <LineupField
                       formation={formation}
@@ -645,20 +676,18 @@ export default function CoachLineupBuilder({ user }) {
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
-                  <CardTitle>Substitutes ({substitutes.length})</CardTitle>
+              <Card className="bg-white/80 backdrop-blur-xl border border-slate-200/50 shadow-lg rounded-3xl">
+                <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0 border-b border-slate-200/50">
+                  <CardTitle className="text-xl font-bold text-slate-900">Substitutes ({substitutes.length})</CardTitle>
                   <Button
-                    variant="outline"
-                    size="sm"
                     onClick={() => setBenchSlots(benchSlots + 1)}
-                    className="w-full sm:w-auto"
+                    className="bg-white/80 backdrop-blur-xl border border-slate-200/50 text-slate-700 hover:bg-white hover:border-slate-300 rounded-xl shadow-lg w-full sm:w-auto"
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Bench Slot
                   </Button>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-6">
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
                     {Array.from({ length: benchSlots }).map((_, index) => {
                       const playerId = substitutes[index];
@@ -667,7 +696,7 @@ export default function CoachLineupBuilder({ user }) {
                       return (
                         <div
                           key={index}
-                          className="relative border-2 border-dashed border-gray-300 rounded-lg p-3 hover:border-[var(--primary-main)] transition-colors cursor-pointer"
+                          className="relative bg-white/80 backdrop-blur-xl border-2 border-dashed border-slate-300/50 rounded-xl p-3 hover:border-[#118ff3] hover:shadow-lg transition-all cursor-pointer"
                           onClick={() => {
                             if (!playerId) {
                               setSelectedPosition("bench");
@@ -685,13 +714,11 @@ export default function CoachLineupBuilder({ user }) {
                               </p>
                               <p className="text-[10px] text-gray-500 capitalize truncate">{player.position}</p>
                               <Button
-                                variant="ghost"
-                                size="sm"
-                                className="mt-2 w-full text-xs h-7"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleRemoveSub(playerId);
                                 }}
+                                className="mt-2 w-full text-xs h-7 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-lg"
                               >
                                 Remove
                               </Button>
@@ -701,19 +728,17 @@ export default function CoachLineupBuilder({ user }) {
                               {/* Add delete button for empty slots */}
                               {benchSlots > substitutes.length && (
                                 <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="absolute top-0 right-0 p-1 h-6 w-6 text-gray-400 hover:text-red-500"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleRemoveBenchSlot(index);
                                   }}
+                                  className="absolute top-0 right-0 p-1 h-6 w-6 text-slate-400 hover:text-red-500 bg-transparent hover:bg-red-50 rounded-lg"
                                 >
                                   <Trash2 className="w-3 h-3" />
                                 </Button>
                               )}
-                              <Plus className="w-6 h-6 mx-auto mb-1" />
-                              <p className="text-[10px]">Add Player</p>
+                              <Plus className="w-6 h-6 mx-auto mb-1 text-slate-400" />
+                              <p className="text-[10px] text-slate-500">Add Player</p>
                             </div>
                           )}
                         </div>
@@ -727,11 +752,11 @@ export default function CoachLineupBuilder({ user }) {
 
           {selectedEventId && isSelectedEventPast && existingLineup && (
             <>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Starting Lineup (View Only)</CardTitle>
+              <Card className="bg-white/80 backdrop-blur-xl border border-slate-200/50 shadow-lg rounded-3xl">
+                <CardHeader className="border-b border-slate-200/50">
+                  <CardTitle className="text-xl font-bold text-slate-900">Starting Lineup (View Only)</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-6">
                   <div className="w-full mx-auto lg:max-w-4xl xl:max-w-5xl">
                     <LineupField
                       formation={formation}
@@ -747,25 +772,25 @@ export default function CoachLineupBuilder({ user }) {
               </Card>
 
               {substitutes.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Substitutes (View Only)</CardTitle>
+                <Card className="bg-white/80 backdrop-blur-xl border border-slate-200/50 shadow-lg rounded-3xl">
+                  <CardHeader className="border-b border-slate-200/50">
+                    <CardTitle className="text-xl font-bold text-slate-900">Substitutes (View Only)</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="pt-6">
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
                       {substitutes.map((playerId, index) => {
                         const player = players.find(p => p.id === playerId);
                         
                         return player ? (
-                          <div key={index} className="border-2 border-gray-300 rounded-lg p-3">
+                          <div key={index} className="bg-white/80 backdrop-blur-xl border-2 border-slate-300/50 rounded-xl p-3">
                             <div className="text-center">
-                              <div className="w-10 h-10 mx-auto bg-gray-200 rounded-full flex items-center justify-center font-bold text-base mb-2">
+                              <div className="w-10 h-10 mx-auto bg-slate-200 rounded-full flex items-center justify-center font-bold text-base mb-2">
                                 {player.jersey_number}
                               </div>
-                              <p className="text-xs font-medium truncate">
+                              <p className="text-xs font-medium truncate text-slate-900">
                                 {player.first_name && player.last_name ? `${player.first_name} ${player.last_name}` : (player.email || `Player ${player.id.slice(0, 8)}`)}
                               </p>
-                              <p className="text-[10px] text-gray-500 capitalize truncate">{player.position}</p>
+                              <p className="text-[10px] text-slate-500 capitalize truncate">{player.position}</p>
                             </div>
                           </div>
                         ) : null;

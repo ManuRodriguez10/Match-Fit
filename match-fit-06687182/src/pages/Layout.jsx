@@ -125,8 +125,8 @@ function LayoutContent({ children, currentPageName }) {
 
   const navigation = userTeamRole === "coach" ? coachNavigation : playerNavigation;
 
-  // Hide sidebar on Dashboard, Events, and Roster pages (uses navbar instead)
-  const pagesWithoutSidebar = ["Dashboard", "Events", "Roster"];
+  // Hide sidebar on Dashboard, Events, Roster, and Lineups pages (uses navbar instead)
+  const pagesWithoutSidebar = ["Dashboard", "Events", "Roster", "Lineups"];
   const showSidebar = !pagesWithoutSidebar.includes(currentPageName);
 
   return (

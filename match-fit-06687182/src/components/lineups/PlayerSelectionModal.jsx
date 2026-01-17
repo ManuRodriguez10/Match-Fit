@@ -38,31 +38,31 @@ export default function PlayerSelectionModal({ players, assignedPlayers, onSelec
     <button
       key={player.id}
       onClick={() => onSelect(player.id)}
-      className="w-full flex items-center gap-4 p-4 border rounded-lg hover:bg-gray-50 hover:border-[var(--primary-main)] transition-all text-left"
+      className="w-full flex items-center gap-4 p-4 bg-white/80 backdrop-blur-xl border border-slate-200/50 rounded-xl hover:bg-white hover:border-[#118ff3] hover:shadow-lg transition-all text-left"
     >
-      <div className="w-12 h-12 bg-gradient-to-br from-[var(--primary-main)] to-[var(--primary-dark)] rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+      <div className="w-12 h-12 bg-gradient-to-br from-[#118ff3] to-[#0c5798] rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0 shadow-lg shadow-[#118ff3]/30">
         {player.jersey_number}
       </div>
       <div className="flex-1 min-w-0">
-        <h3 className="font-semibold text-gray-900">
+        <h3 className="font-semibold text-slate-900">
           {player.first_name && player.last_name 
             ? `${player.first_name} ${player.last_name}` 
             : (player.email || `Player ${player.id.slice(0, 8)}`)}
         </h3>
-        <p className="text-sm text-gray-600 capitalize">{player.position}</p>
+        <p className="text-sm text-slate-600 capitalize">{player.position}</p>
       </div>
-      <div className="text-sm text-gray-500">
+      <div className="text-sm text-slate-500">
         #{player.jersey_number}
       </div>
     </button>
   );
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-2xl max-h-[80vh] flex flex-col">
-        <CardHeader className="border-b flex flex-row items-center justify-between space-y-0 pb-4">
-          <CardTitle>Select Player</CardTitle>
-          <Button variant="ghost" size="icon" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <Card className="w-full max-w-2xl max-h-[80vh] flex flex-col bg-white/95 backdrop-blur-xl border border-slate-200/50 shadow-2xl rounded-3xl">
+        <CardHeader className="border-b border-slate-200/50 flex flex-row items-center justify-between space-y-0 pb-4">
+          <CardTitle className="text-xl font-bold text-slate-900">Select Player</CardTitle>
+          <Button variant="ghost" size="icon" onClick={onClose} className="rounded-xl hover:bg-slate-100">
             <X className="w-4 h-4" />
           </Button>
         </CardHeader>
@@ -83,7 +83,7 @@ export default function PlayerSelectionModal({ players, assignedPlayers, onSelec
                 {Object.entries(groupedPlayers).map(([position, positionPlayers]) => 
                   positionPlayers.length > 0 ? (
                     <div key={position}>
-                      <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3 sticky top-0 bg-white py-2 z-10">
+                      <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-3 sticky top-0 bg-white/95 backdrop-blur-sm py-2 z-10 rounded-lg px-2">
                         {positionLabels[position]} ({positionPlayers.length})
                       </h3>
                       <div className="space-y-2">
@@ -94,7 +94,7 @@ export default function PlayerSelectionModal({ players, assignedPlayers, onSelec
                 )}
               </>
             ) : (
-              <div className="text-center py-12 text-gray-500">
+              <div className="text-center py-12 text-slate-500">
                 {availablePlayers.length === 0 
                   ? "All players have been assigned"
                   : "No players match your search"}
