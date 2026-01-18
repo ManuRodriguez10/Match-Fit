@@ -11,7 +11,8 @@ export default function DayDetailsModal({
   onEventClick,
   onEditEvent,
   onDeleteEvent,
-  onCreateEvent
+  onCreateEvent,
+  userRole
 }) {
   if (!selectedDate) return null;
 
@@ -78,7 +79,7 @@ export default function DayDetailsModal({
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {dayEvents.length > 0 && (
+              {userRole === "coach" && dayEvents.length > 0 && (
                 <Button
                   onClick={() => onCreateEvent(selectedDate)}
                   className="bg-gradient-to-r from-[#118ff3] to-[#0c5798] hover:from-[#0c5798] hover:to-[#118ff3] text-white rounded-xl px-4"
@@ -153,24 +154,26 @@ export default function DayDetailsModal({
                             Required
                           </span>
                         )}
-                        <div className="flex flex-col gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => onEditEvent(event)}
-                            className="rounded-lg hover:bg-slate-100 h-8 w-8"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => onDeleteEvent(event.id)}
-                            className="rounded-lg hover:bg-red-50 hover:text-red-600 h-8 w-8"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
+                        {userRole === "coach" && (
+                          <div className="flex flex-col gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => onEditEvent(event)}
+                              className="rounded-lg hover:bg-slate-100 h-8 w-8"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => onDeleteEvent(event.id)}
+                              className="rounded-lg hover:bg-red-50 hover:text-red-600 h-8 w-8"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </motion.div>
@@ -183,14 +186,20 @@ export default function DayDetailsModal({
                 <CalendarIcon className="w-8 h-8 text-slate-400" />
               </div>
               <h3 className="text-lg font-bold text-slate-900 mb-2">No events scheduled</h3>
-              <p className="text-slate-600 mb-6">This day is free. Add an event to get started.</p>
-              <Button
-                onClick={() => onCreateEvent(selectedDate)}
-                className="bg-gradient-to-r from-[#118ff3] to-[#0c5798] hover:from-[#0c5798] hover:to-[#118ff3] text-white rounded-xl"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Create Event
-              </Button>
+              <p className="text-slate-600 mb-6">
+                {userRole === "coach" 
+                  ? "This day is free. Add an event to get started."
+                  : "Your coach hasn't added any events to this day."}
+              </p>
+              {userRole === "coach" && (
+                <Button
+                  onClick={() => onCreateEvent(selectedDate)}
+                  className="bg-gradient-to-r from-[#118ff3] to-[#0c5798] hover:from-[#0c5798] hover:to-[#118ff3] text-white rounded-xl"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Event
+                </Button>
+              )}
             </div>
           )}
         </div>

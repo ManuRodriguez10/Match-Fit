@@ -447,6 +447,7 @@ export default function CoachEventsView({ user }) {
             }}
             onDeleteEvent={handleDeleteEvent}
             onCreateEvent={handleCreateEventForDay}
+            userRole={user?.team_role || "coach"}
           />
         )}
 

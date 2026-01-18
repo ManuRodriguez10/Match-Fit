@@ -77,6 +77,9 @@ export default function PlayerRosterPage() {
 
   // Group team members by role and position
   const coaches = teamMembers.filter(m => m.team_role === "coach");
+  const headCoaches = coaches.filter(c => c.coach_role === "head_coach");
+  const assistantCoaches = coaches.filter(c => c.coach_role === "assistant_coach");
+  const otherCoaches = coaches.filter(c => !c.coach_role || (c.coach_role !== "head_coach" && c.coach_role !== "assistant_coach"));
   const allPlayers = [...teamMembers.filter(m => m.team_role === "player")].sort((a, b) => {
     // Sort by jersey number (lowest to highest)
     // Players without jersey numbers go to the end
@@ -469,12 +472,40 @@ export default function PlayerRosterPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-6"
+            className="space-y-8"
           >
             {hasCoaches ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {coaches.map((coach, index) => renderCoachCard(coach, index))}
-              </div>
+              <>
+                {/* Head Coach Section */}
+                {headCoaches.length > 0 && (
+                  <div className="space-y-4">
+                    <h2 className="text-2xl font-bold text-slate-900">Head Coach</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {headCoaches.map((coach, index) => renderCoachCard(coach, index))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Assistant Coach Section */}
+                {assistantCoaches.length > 0 && (
+                  <div className="space-y-4">
+                    <h2 className="text-2xl font-bold text-slate-900">Assistant Coach</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {assistantCoaches.map((coach, index) => renderCoachCard(coach, index))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Other Coaches Section (if any) */}
+                {otherCoaches.length > 0 && (
+                  <div className="space-y-4">
+                    <h2 className="text-2xl font-bold text-slate-900">Other Coaches</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {otherCoaches.map((coach, index) => renderCoachCard(coach, index))}
+                    </div>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-slate-200/50 shadow-lg p-12 text-center">
                 <Users className="w-16 h-16 mx-auto text-slate-400 mb-4" />
