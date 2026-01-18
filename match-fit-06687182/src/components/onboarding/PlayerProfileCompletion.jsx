@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { createPageUrl } from "@/utils";
+import { motion } from "framer-motion";
 
 const COUNTRIES = [
   "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", 
@@ -395,62 +396,77 @@ export default function PlayerProfileCompletion({ user, onComplete }) {
                     dateOfBirthError || heightError || weightError || nationalityError || phoneError;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[var(--primary-light)] to-blue-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#e7f3fe] via-white to-[#e7f3fe] flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
-        <div className="text-center mb-8">
-          <div className="w-48 h-16 mx-auto mb-4 bg-white rounded-lg flex items-center justify-center p-2 shadow-sm">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="text-center mb-8"
+        >
+          <div className="flex justify-center mb-4">
             <img src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68c332f7b5426ee106687182/32285dc04_MatchFitLogo.png" alt="MatchFit Logo" className="h-12 w-auto object-contain" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Complete Your Player Profile</h1>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-[#118ff3] to-[#0c5798] bg-clip-text text-transparent mb-2">
+            Complete Your Player Profile
+          </h1>
           <p className="text-gray-600">
             Now that you've joined a team, let's finish setting up your player profile.
           </p>
-        </div>
+        </motion.div>
 
-        <Card>
-          <CardContent className="p-6">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="first_name">First Name *</Label>
-                  <Input
-                    id="first_name"
-                    value={playerData.first_name}
-                    onChange={(e) => handlePlayerDataChange("first_name", e.target.value)}
-                    placeholder="John"
-                    className={firstNameError ? "border-red-500" : ""}
-                    required
-                  />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
+          <div className="backdrop-blur-md bg-white/80 rounded-2xl shadow-xl border border-white/20 overflow-hidden">
+            {/* Gradient accent bar */}
+            <div className="h-1.5 bg-gradient-to-r from-[#118ff3] to-[#0c5798]"></div>
+            
+            <div className="p-8">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="first_name" className="text-gray-700 font-medium">First Name *</Label>
+                    <Input
+                      id="first_name"
+                      value={playerData.first_name}
+                      onChange={(e) => handlePlayerDataChange("first_name", e.target.value)}
+                      placeholder="John"
+                      className={`rounded-lg ${firstNameError ? "border-red-500" : "border-gray-200 focus:border-blue-500 focus:ring-blue-500"}`}
+                      required
+                    />
                   {firstNameError && (
                     <p className="text-xs text-red-500">{firstNameError}</p>
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="last_name">Last Name *</Label>
-                  <Input
-                    id="last_name"
-                    value={playerData.last_name}
-                    onChange={(e) => handlePlayerDataChange("last_name", e.target.value)}
-                    placeholder="Doe"
-                    className={lastNameError ? "border-red-500" : ""}
-                    required
-                  />
+                  <div className="space-y-2">
+                    <Label htmlFor="last_name" className="text-gray-700 font-medium">Last Name *</Label>
+                    <Input
+                      id="last_name"
+                      value={playerData.last_name}
+                      onChange={(e) => handlePlayerDataChange("last_name", e.target.value)}
+                      placeholder="Doe"
+                      className={`rounded-lg ${lastNameError ? "border-red-500" : "border-gray-200 focus:border-blue-500 focus:ring-blue-500"}`}
+                      required
+                    />
                   {lastNameError && (
                     <p className="text-xs text-red-500">{lastNameError}</p>
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="position">Position *</Label>
-                  <Select 
-                    value={playerData.position} 
-                    onValueChange={(value) => handlePlayerDataChange("position", value)}
-                    required
-                  >
-                    <SelectTrigger className={positionError ? "border-red-500" : ""}>
-                      <SelectValue placeholder="Select your position" />
-                    </SelectTrigger>
+                  <div className="space-y-2">
+                    <Label htmlFor="position" className="text-gray-700 font-medium">Position *</Label>
+                    <Select 
+                      value={playerData.position} 
+                      onValueChange={(value) => handlePlayerDataChange("position", value)}
+                      required
+                    >
+                      <SelectTrigger className={`rounded-lg ${positionError ? "border-red-500" : "border-gray-200 focus:border-blue-500 focus:ring-blue-500"}`}>
+                        <SelectValue placeholder="Select your position" />
+                      </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="goalkeeper">Goalkeeper</SelectItem>
                       <SelectItem value="defender">Defender</SelectItem>
@@ -463,19 +479,19 @@ export default function PlayerProfileCompletion({ user, onComplete }) {
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="jersey_number">Jersey Number *</Label>
-                  <Input
-                    id="jersey_number"
-                    type="number"
-                    min="1"
-                    max="99"
-                    value={playerData.jersey_number}
-                    onChange={(e) => handlePlayerDataChange("jersey_number", parseInt(e.target.value) || "")}
-                    placeholder="e.g., 10"
-                    className={jerseyError ? "border-red-500" : ""}
-                    required
-                  />
+                  <div className="space-y-2">
+                    <Label htmlFor="jersey_number" className="text-gray-700 font-medium">Jersey Number *</Label>
+                    <Input
+                      id="jersey_number"
+                      type="number"
+                      min="1"
+                      max="99"
+                      value={playerData.jersey_number}
+                      onChange={(e) => handlePlayerDataChange("jersey_number", parseInt(e.target.value) || "")}
+                      placeholder="e.g., 10"
+                      className={`rounded-lg ${jerseyError ? "border-red-500" : "border-gray-200 focus:border-blue-500 focus:ring-blue-500"}`}
+                      required
+                    />
                   {jerseyError ? (
                     <p className="text-xs text-red-500">{jerseyError}</p>
                   ) : takenJerseyNumbers.length > 0 ? (
@@ -485,16 +501,16 @@ export default function PlayerProfileCompletion({ user, onComplete }) {
                   ) : null}
                 </div>
 
-                <div className="space-y-2 md:col-span-2">
-                  <Label>Phone Number *</Label>
-                  <div className="flex gap-2">
-                    <Select 
-                      value={playerData.country_code} 
-                      onValueChange={(value) => handlePlayerDataChange("country_code", value)}
-                    >
-                      <SelectTrigger className="w-[140px]">
-                        <SelectValue placeholder="Code" />
-                      </SelectTrigger>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label className="text-gray-700 font-medium">Phone Number *</Label>
+                    <div className="flex gap-2">
+                      <Select 
+                        value={playerData.country_code} 
+                        onValueChange={(value) => handlePlayerDataChange("country_code", value)}
+                      >
+                        <SelectTrigger className="w-[140px] rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500">
+                          <SelectValue placeholder="Code" />
+                        </SelectTrigger>
                       <SelectContent>
                         {COUNTRY_CODES.map(({ code, country }) => (
                           <SelectItem key={code} value={code}>
@@ -503,15 +519,15 @@ export default function PlayerProfileCompletion({ user, onComplete }) {
                         ))}
                       </SelectContent>
                     </Select>
-                    <Input
-                      id="local_phone_number"
-                      type="tel"
-                      value={playerData.local_phone_number}
-                      onChange={(e) => handlePlayerDataChange("local_phone_number", e.target.value)}
-                      placeholder="5551234567"
-                      className={phoneError ? "border-red-500 flex-1" : "flex-1"}
-                      required
-                    />
+                      <Input
+                        id="local_phone_number"
+                        type="tel"
+                        value={playerData.local_phone_number}
+                        onChange={(e) => handlePlayerDataChange("local_phone_number", e.target.value)}
+                        placeholder="5551234567"
+                        className={`rounded-lg flex-1 ${phoneError ? "border-red-500" : "border-gray-200 focus:border-blue-500 focus:ring-blue-500"}`}
+                        required
+                      />
                   </div>
                   {phoneError ? (
                     <p className="text-xs text-red-500">{phoneError}</p>
@@ -520,51 +536,51 @@ export default function PlayerProfileCompletion({ user, onComplete }) {
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="date_of_birth">Date of Birth *</Label>
-                  <Input
-                    id="date_of_birth"
-                    type="date"
-                    value={playerData.date_of_birth}
-                    onChange={(e) => handlePlayerDataChange("date_of_birth", e.target.value)}
-                    className={dateOfBirthError ? "border-red-500" : ""}
-                    required
-                  />
+                  <div className="space-y-2">
+                    <Label htmlFor="date_of_birth" className="text-gray-700 font-medium">Date of Birth *</Label>
+                    <Input
+                      id="date_of_birth"
+                      type="date"
+                      value={playerData.date_of_birth}
+                      onChange={(e) => handlePlayerDataChange("date_of_birth", e.target.value)}
+                      className={`rounded-lg ${dateOfBirthError ? "border-red-500" : "border-gray-200 focus:border-blue-500 focus:ring-blue-500"}`}
+                      required
+                    />
                   {dateOfBirthError && (
                     <p className="text-xs text-red-500">{dateOfBirthError}</p>
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Height *</Label>
-                  <div className="flex gap-2">
-                    <div className="flex-1">
-                      <Input
-                        id="height_feet"
-                        type="number"
-                        min="3"
-                        max="8"
-                        value={playerData.height_feet}
-                        onChange={(e) => handlePlayerDataChange("height_feet", e.target.value)}
-                        placeholder="Feet"
-                        className={heightError ? "border-red-500" : ""}
-                        required
-                      />
+                  <div className="space-y-2">
+                    <Label className="text-gray-700 font-medium">Height *</Label>
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        <Input
+                          id="height_feet"
+                          type="number"
+                          min="3"
+                          max="8"
+                          value={playerData.height_feet}
+                          onChange={(e) => handlePlayerDataChange("height_feet", e.target.value)}
+                          placeholder="Feet"
+                          className={`rounded-lg ${heightError ? "border-red-500" : "border-gray-200 focus:border-blue-500 focus:ring-blue-500"}`}
+                          required
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <Input
+                          id="height_inches"
+                          type="number"
+                          min="0"
+                          max="11"
+                          value={playerData.height_inches}
+                          onChange={(e) => handlePlayerDataChange("height_inches", e.target.value)}
+                          placeholder="Inches"
+                          className={`rounded-lg ${heightError ? "border-red-500" : "border-gray-200 focus:border-blue-500 focus:ring-blue-500"}`}
+                          required
+                        />
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <Input
-                        id="height_inches"
-                        type="number"
-                        min="0"
-                        max="11"
-                        value={playerData.height_inches}
-                        onChange={(e) => handlePlayerDataChange("height_inches", e.target.value)}
-                        placeholder="Inches"
-                        className={heightError ? "border-red-500" : ""}
-                        required
-                      />
-                    </div>
-                  </div>
                   {heightError ? (
                     <p className="text-xs text-red-500">{heightError}</p>
                   ) : (
@@ -572,16 +588,16 @@ export default function PlayerProfileCompletion({ user, onComplete }) {
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="weight">Weight (lbs) *</Label>
-                  <Input
-                    id="weight"
-                    value={playerData.weight}
-                    onChange={(e) => handlePlayerDataChange("weight", e.target.value)}
-                    placeholder="e.g., 165"
-                    className={weightError ? "border-red-500" : ""}
-                    required
-                  />
+                  <div className="space-y-2">
+                    <Label htmlFor="weight" className="text-gray-700 font-medium">Weight (lbs) *</Label>
+                    <Input
+                      id="weight"
+                      value={playerData.weight}
+                      onChange={(e) => handlePlayerDataChange("weight", e.target.value)}
+                      placeholder="e.g., 165"
+                      className={`rounded-lg ${weightError ? "border-red-500" : "border-gray-200 focus:border-blue-500 focus:ring-blue-500"}`}
+                      required
+                    />
                   {weightError ? (
                     <p className="text-xs text-red-500">{weightError}</p>
                   ) : (
@@ -589,16 +605,16 @@ export default function PlayerProfileCompletion({ user, onComplete }) {
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="nationality">Nationality *</Label>
-                  <Select 
-                    value={playerData.nationality} 
-                    onValueChange={(value) => handlePlayerDataChange("nationality", value)}
-                    required
-                  >
-                    <SelectTrigger id="nationality" className={nationalityError ? "border-red-500" : ""}>
-                      <SelectValue placeholder="Select your country" />
-                    </SelectTrigger>
+                  <div className="space-y-2">
+                    <Label htmlFor="nationality" className="text-gray-700 font-medium">Nationality *</Label>
+                    <Select 
+                      value={playerData.nationality} 
+                      onValueChange={(value) => handlePlayerDataChange("nationality", value)}
+                      required
+                    >
+                      <SelectTrigger id="nationality" className={`rounded-lg ${nationalityError ? "border-red-500" : "border-gray-200 focus:border-blue-500 focus:ring-blue-500"}`}>
+                        <SelectValue placeholder="Select your country" />
+                      </SelectTrigger>
                     <SelectContent>
                       {COUNTRIES.map((country) => (
                         <SelectItem key={country} value={country}>
@@ -613,29 +629,27 @@ export default function PlayerProfileCompletion({ user, onComplete }) {
                 </div>
               </div>
 
-              <div className="flex justify-end pt-6">
+              <div className="flex gap-3 pt-6">
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium text-sm h-10 transition-all text-white border-2 border-red-600 bg-red-600 hover:bg-red-700 hover:border-red-700"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Logout
+                </button>
                 <Button
                   type="submit"
-                  className="bg-[var(--primary-main)] hover:bg-[var(--primary-dark)] text-white"
+                  className="flex-1 bg-gradient-to-r from-[#118ff3] to-[#0c5798] hover:from-[#0c5798] hover:to-[#118ff3] text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 px-4 py-3 h-10 text-sm"
                   disabled={isSubmitting || hasErrors}
                 >
                   {isSubmitting ? "Completing Profile..." : "Complete Profile"}
                 </Button>
               </div>
             </form>
-          </CardContent>
-        </Card>
-
-        <div className="mt-6 text-center">
-          <Button
-            variant="ghost"
-            onClick={handleLogout}
-            className="text-gray-600 hover:text-gray-900"
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Logout
-          </Button>
-        </div>
+            </div>
+          </div>
+        </motion.div>
       </div>
     </div>
   );
