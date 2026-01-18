@@ -60,13 +60,14 @@ export default function Dashboard() {
   }
 
   // All onboarding complete - show appropriate dashboard
+  // Note: Both CoachDashboard and PlayerDashboard now handle their own full-screen layouts
   return (
-    <div className="p-6">
+    <>
       {currentUser.team_role === "coach" ? (
         <CoachDashboard user={currentUser} />
       ) : (
         <PlayerDashboard user={currentUser} />
       )}
-    </div>
+    </>
   );
 }
