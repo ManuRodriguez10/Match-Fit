@@ -2,11 +2,11 @@ import React, { useState } from "react";
 import { supabase } from "@/api/supabaseClient";
 import { createPageUrl } from "@/utils";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, LogOut } from "lucide-react";
+import { ArrowLeft, LogOut, Users } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function JoinTeamForm({ user, onComplete, onBack }) {
   const navigate = useNavigate();
@@ -73,62 +73,95 @@ export default function JoinTeamForm({ user, onComplete, onBack }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[var(--primary-light)] to-blue-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#e7f3fe] via-white to-[#e7f3fe] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <Card>
-          <CardHeader>
-            <Button variant="ghost" size="icon" onClick={onBack} className="mb-2">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="backdrop-blur-md bg-white/80 rounded-2xl shadow-xl border border-white/20 overflow-hidden"
+        >
+          {/* Gradient accent bar */}
+          <div className="h-1.5 bg-gradient-to-r from-[#118ff3] to-[#0c5798]"></div>
+          
+          <div className="p-8">
+          {/* Header */}
+          <div className="mb-8">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={onBack} 
+              className="mb-4 hover:bg-blue-50"
+            >
               <ArrowLeft className="w-4 h-4" />
             </Button>
-            <CardTitle>Join a Team</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="joinCode">Team Code *</Label>
-                <Input
-                  id="joinCode"
-                  value={joinCode}
-                  onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                  placeholder="Enter 6-character code"
-                  maxLength={6}
-                  required
-                  className="text-center text-2xl tracking-wider font-bold"
-                />
-                <p className="text-sm text-gray-500">Ask your coach for this code.</p>
+            <div className="flex items-center justify-center mb-4">
+              <div className="w-16 h-16 bg-gradient-to-r from-[#118ff3] to-[#0c5798] rounded-full flex items-center justify-center shadow-lg">
+                <Users className="w-8 h-8 text-white" />
               </div>
+            </div>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-[#118ff3] to-[#0c5798] bg-clip-text text-transparent text-center">
+              Join Your Team
+            </h1>
+          </div>
 
-              {error && (
-                <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-                  {error}
-                </div>
-              )}
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="joinCode" className="text-gray-700 font-medium">
+                Team Code *
+              </Label>
+              <Input
+                id="joinCode"
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                placeholder="Enter 6-character code"
+                maxLength={6}
+                required
+                className="text-center text-2xl tracking-wider font-bold rounded-lg h-14 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+              />
+              <p className="text-sm text-gray-500 text-center">Ask your coach for this code.</p>
+            </div>
 
-              <div className="flex gap-3">
-                <Button type="button" variant="outline" onClick={onBack} className="flex-1">
-                  Back
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="flex-1 bg-[var(--primary-main)] hover:bg-[var(--primary-dark)]"
-                >
-                  {isSubmitting ? "Joining..." : "Join Team"}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700"
+              >
+                {error}
+              </motion.div>
+            )}
+
+            <div className="flex gap-3 pt-2">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={onBack} 
+                className="flex-1 rounded-lg border-gray-200 hover:bg-gray-50"
+              >
+                Back
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
+              >
+                {isSubmitting ? "Joining..." : "Join Team"}
+              </Button>
+            </div>
+          </form>
+          </div>
+        </motion.div>
 
         <div className="mt-6 text-center">
-          <Button
-            variant="ghost"
+          <button
             onClick={handleLogout}
-            className="text-gray-600 hover:text-gray-900"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-sm transition-all text-white border-2 border-red-600 bg-red-600 hover:bg-red-700 hover:border-red-700"
           >
-            <LogOut className="w-4 h-4 mr-2" />
+            <LogOut className="w-4 h-4" />
             Logout
-          </Button>
+          </button>
         </div>
       </div>
     </div>

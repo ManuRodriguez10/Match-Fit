@@ -376,8 +376,10 @@ export default function RosterPage() {
                 {view === "coaches" ? "Coaching Staff" : view === "players" ? "Players" : "Team Roster"}
               </span>
             </h1>
-            <p className="text-slate-600 text-lg">
-              {view === "coaches" ? "Manage your coaching team" : view === "players" ? "View and manage your players" : "View and manage your team members"}
+            <p className="text-lg">
+              <span className="bg-gradient-to-r from-[#118ff3] to-[#0c5798] bg-clip-text text-transparent font-semibold">
+                {view === "coaches" ? "Manage your coaching team" : view === "players" ? "View and manage your players" : "View and manage your team members"}
+              </span>
             </p>
           </div>
           
