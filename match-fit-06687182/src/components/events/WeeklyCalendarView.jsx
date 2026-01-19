@@ -102,24 +102,18 @@ export default function WeeklyCalendarView({ events, onEventClick, onDayClick, c
                 {/* Events */}
                 <div className="space-y-1.5">
                   {dayEvents.slice(0, 3).map((event) => (
-                    <motion.div
+                    <div
                       key={event.id}
-                      whileHover={{ scale: 1.02 }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEventClick(event);
-                      }}
                       className={`
-                        text-[11px] p-1.5 rounded-lg cursor-pointer transition-all
+                        text-[11px] p-1.5 rounded-lg transition-all pointer-events-none
                         ${getEventTypeColorClass(event.type)} text-white
-                        hover:shadow-md hover:opacity-90
                       `}
                     >
                       <div className="font-semibold truncate leading-tight mb-0.5">{event.title}</div>
                       <div className="text-[10px] opacity-90 leading-tight">
                         {format(new Date(event.date), "h:mm a")}
                       </div>
-                    </motion.div>
+                    </div>
                   ))}
                   {dayEvents.length > 3 && (
                     <div className="text-[11px] text-slate-600 font-medium px-1.5 py-1 bg-slate-100 rounded">

@@ -154,24 +154,18 @@ export default function CalendarView({ events, onEventClick, onDayClick }) {
                 {/* Events */}
                 <div className="space-y-0.5">
                   {dayEvents.slice(0, 2).map((event) => (
-                    <motion.div
+                    <div
                       key={event.id}
-                      whileHover={{ scale: 1.02 }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEventClick(event);
-                      }}
                       className={`
-                        text-[10px] p-1 rounded cursor-pointer transition-all
+                        text-[10px] p-1 rounded transition-all pointer-events-none
                         ${getEventTypeColorClass(event.type)} text-white
-                        hover:shadow-md hover:opacity-90
                       `}
                     >
                       <div className="font-medium truncate leading-tight">{event.title}</div>
                       <div className="text-[9px] opacity-90 leading-tight">
                         {format(new Date(event.date), "h:mm a")}
                       </div>
-                    </motion.div>
+                    </div>
                   ))}
                   {dayEvents.length > 2 && (
                     <div className="text-[10px] text-slate-500 font-medium px-1">

@@ -1,10 +1,10 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { X, Edit, Trash2, MapPin, Calendar as CalendarIcon, Users, Clock } from "lucide-react";
+import { X, Edit, Trash2, MapPin, Calendar as CalendarIcon, Users, Clock, ArrowLeft } from "lucide-react";
 import { format, isPast } from "date-fns";
 import { motion } from "framer-motion";
 
-export default function EventDetails({ event, onClose, onEdit, onDelete, userRole }) {
+export default function EventDetails({ event, onClose, onEdit, onDelete, userRole, onBackToDay }) {
   const getEventTypeColor = (type) => {
     switch (type) {
       case "game":
@@ -71,14 +71,27 @@ export default function EventDetails({ event, onClose, onEdit, onDelete, userRol
                 </div>
               </div>
             </div>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={onClose}
-              className="rounded-xl hover:bg-slate-100 flex-shrink-0"
-            >
-              <X className="w-5 h-5" />
-            </Button>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {onBackToDay && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={onBackToDay}
+                  className="rounded-xl hover:bg-slate-100"
+                  title="Back to day view"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </Button>
+              )}
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={onClose}
+                className="rounded-xl hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
           </div>
         </div>
         

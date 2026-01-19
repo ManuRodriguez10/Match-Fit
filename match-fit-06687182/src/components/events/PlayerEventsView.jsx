@@ -278,6 +278,10 @@ export default function PlayerEventsView({ user }) {
           <EventDetails
             event={selectedEvent}
             onClose={() => setSelectedEvent(null)}
+            onBackToDay={() => {
+              setSelectedEvent(null);
+              setSelectedDay(new Date(selectedEvent.date));
+            }}
             userRole={user.team_role}
           />
         )}

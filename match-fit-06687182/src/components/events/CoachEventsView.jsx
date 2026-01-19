@@ -420,6 +420,10 @@ export default function CoachEventsView({ user }) {
           <EventDetails
             event={selectedEvent}
             onClose={() => setSelectedEvent(null)}
+            onBackToDay={() => {
+              setSelectedEvent(null);
+              setSelectedDay(new Date(selectedEvent.date));
+            }}
             onEdit={(event) => {
               setEditingEvent(event);
               setSelectedEvent(null);
