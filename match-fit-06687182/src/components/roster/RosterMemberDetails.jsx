@@ -188,8 +188,8 @@ export default function RosterMemberDetails({ member, currentUser, onClose, onPl
         
         {/* Content */}
         <div className="p-6 space-y-6 overflow-y-auto flex-1">
-          {/* Contact Information - Only visible to coaches */}
-          {isCoach && (
+          {/* Contact Information - Visible to coaches (for all members) and to players (for coaches only) */}
+          {(isCoach || isCoachMember) && (
             <div className="space-y-4">
               <h3 className="text-lg font-bold text-slate-900">Contact Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

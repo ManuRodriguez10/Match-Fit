@@ -164,9 +164,9 @@ export default function PlayerDashboard({ user }) {
                 Player
               </span>
               {user.position && (
-                <Badge variant="outline" className="capitalize border-slate-300">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100/80 backdrop-blur-sm border border-slate-200/60 text-slate-700 text-sm font-medium capitalize">
                   {user.position} {user.jersey_number && `#${user.jersey_number}`}
-                </Badge>
+                </span>
               )}
             </div>
             <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">

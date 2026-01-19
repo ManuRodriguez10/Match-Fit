@@ -57,8 +57,37 @@ export default function RosterPage() {
 
       if (error) {
         console.error("Error loading team members:", error);
+        setTeamMembers([]);
       } else {
-        setTeamMembers(members || []);
+        // Email should now be in the profiles table after running update_profiles_with_email.sql
+        // If email is missing, try to fetch it using RPC function as fallback
+        const membersWithEmails = await Promise.all(
+          (members || []).map(async (member) => {
+            // If email is already in the member object, use it
+            if (member.email) {
+              return member;
+            }
+
+            // Fallback: Try to get email using RPC function if it exists
+            try {
+              const { data: emailData, error: emailError } = await supabase.rpc(
+                'get_user_email',
+                { user_id: member.id }
+              );
+
+              if (!emailError && emailData) {
+                return { ...member, email: emailData };
+              }
+            } catch (error) {
+              // Function might not exist, that's okay
+              console.debug(`Could not fetch email for user ${member.id}`);
+            }
+
+            return member;
+          })
+        );
+
+        setTeamMembers(membersWithEmails);
       }
     } catch (error) {
       console.error("Roster - Error loading roster data:", error);
