@@ -5,6 +5,8 @@ import { X, Trash2, Mail, Phone, Calendar, Ruler, Weight, Globe, Users, Shield, 
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { canRemovePlayers, canRemoveCoaches } from "@/utils/permissions";
+import PermissionLabel from "@/components/common/PermissionLabel";
 
 // Helper function to parse date string as local date
 const parseLocalDate = (dateString) => {
@@ -115,9 +117,51 @@ export default function RosterMemberDetails({ member, currentUser, onClose, onPl
     }
   };
 
+  const handleRemoveCoach = async () => {
+    const displayName = getMemberDisplayName();
+    if (!confirm(`Are you sure you want to remove ${displayName} from the team? This action cannot be undone.`)) {
+      return;
+    }
+
+    setIsRemoving(true);
+    try {
+      // Remove coach by setting team_id and team_role to null
+      const { error } = await supabase
+        .from("profiles")
+        .update({ team_id: null, team_role: null })
+        .eq("id", member.id)
+        .eq("team_id", currentUser.team_id); // Ensure they're on the same team
+
+      if (error) {
+        console.error("Error removing coach:", error);
+        throw error;
+      }
+
+      const teamNameText = teamName || "the team";
+      toast.success(`${displayName} has been successfully removed from ${teamNameText}`);
+      
+      setTimeout(() => {
+        onClose();
+        if (onPlayerRemoved) {
+          onPlayerRemoved();
+        }
+      }, 500);
+    } catch (error) {
+      console.error("Error removing coach:", error);
+      toast.error("Failed to remove coach. Please try again.");
+    } finally {
+      setIsRemoving(false);
+    }
+  };
+
   const isCoach = currentUser?.team_role === "coach";
   const isPlayer = member.team_role === "player";
   const isCoachMember = member.team_role === "coach";
+  const isSelf = currentUser?.id === member.id;
+  const isMemberHeadCoach = isCoachMember && member.coach_role === "head_coach";
+  
+  // Can remove players if head coach, can remove assistant coaches if head coach, but cannot remove other head coaches
+  const canRemove = !isSelf && !isMemberHeadCoach && (isPlayer ? canRemovePlayers(currentUser) : canRemoveCoaches(currentUser));
 
   const positionColor = isPlayer && member.position ? getPositionColor(member.position) : "bg-gradient-to-br from-[#118ff3] to-[#0c5798]";
 
@@ -303,28 +347,41 @@ export default function RosterMemberDetails({ member, currentUser, onClose, onPl
             </div>
           )}
 
-          {/* Remove Player Button (Only for coaches removing players) */}
-          {isCoach && isPlayer && onPlayerRemoved && (
-            <div className="pt-4 border-t border-slate-200/50">
+          {/* Remove Member Button - Show for coaches with appropriate permissions */}
+          {isCoach && ((isPlayer && onPlayerRemoved) || (isCoachMember && onPlayerRemoved)) && !isSelf && (
+            <div className="pt-4 border-t border-slate-200/50 space-y-4">
+              {!canRemove && (
+                <PermissionLabel 
+                  message={
+                    isSelf
+                      ? "You cannot remove yourself from the team"
+                      : isMemberHeadCoach
+                      ? "Head coaches cannot be removed from the team"
+                      : isPlayer 
+                      ? "Only head coaches can remove players from the roster" 
+                      : "Only head coaches can remove coaches from the roster"
+                  } 
+                />
+              )}
               <Button
-                onClick={handleRemovePlayer}
-                disabled={isRemoving}
-                className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg shadow-red-500/30 rounded-xl py-3 h-auto"
+                onClick={isPlayer ? handleRemovePlayer : handleRemoveCoach}
+                disabled={isRemoving || !canRemove}
+                className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg shadow-red-500/30 rounded-xl py-3 h-auto disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isRemoving ? (
                   <>
                     <Trash2 className="w-5 h-5 mr-2 animate-spin" />
-                    Removing Player...
+                    {isPlayer ? "Removing Player..." : "Removing Coach..."}
                   </>
                 ) : (
                   <>
                     <Trash2 className="w-5 h-5 mr-2" />
-                    Remove Player from Team
+                    {isPlayer ? "Remove Player from Team" : "Remove Coach from Team"}
                   </>
                 )}
               </Button>
               <p className="text-sm text-slate-500 mt-3 text-center">
-                This will remove the player from your team roster
+                This will remove the {isPlayer ? "player" : "coach"} from your team roster
               </p>
             </div>
           )}

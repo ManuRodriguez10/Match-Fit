@@ -15,6 +15,8 @@ import { formatDistanceToNow } from "date-fns";
 import DashboardBackground from "@/components/dashboard/DashboardBackground";
 import DashboardNav from "@/components/dashboard/DashboardNav";
 import { motion } from "framer-motion";
+import { canManageTeamSettings, canInviteCoaches, canDeleteTeam } from "@/utils/permissions";
+import PermissionLabel from "@/components/common/PermissionLabel";
 
 export default function TeamSettingsPage() {
   const location = useLocation();
@@ -370,7 +372,7 @@ export default function TeamSettingsPage() {
     );
   }
 
-  const isHeadCoach = currentUser?.coach_role === "head_coach";
+  const isHeadCoach = canManageTeamSettings(currentUser);
 
   // Initial view with section buttons
   if (!view) {
@@ -487,6 +489,11 @@ export default function TeamSettingsPage() {
               <CardTitle className="text-xl font-bold text-slate-900">Team Information</CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
+              {!isHeadCoach && (
+                <div className="mb-6">
+                  <PermissionLabel message="Only head coaches can edit team information" />
+                </div>
+              )}
               <form onSubmit={handleSave} className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="name" className="text-slate-700 font-medium">Team Name</Label>
@@ -497,6 +504,7 @@ export default function TeamSettingsPage() {
                     placeholder="e.g., Thunder Hawks"
                     className="rounded-xl"
                     required
+                    disabled={!isHeadCoach}
                   />
                 </div>
 
@@ -509,13 +517,14 @@ export default function TeamSettingsPage() {
                     placeholder="Tell us about your team..."
                     rows={4}
                     className="rounded-xl"
+                    disabled={!isHeadCoach}
                   />
                 </div>
 
                 <Button 
                   type="submit" 
-                  disabled={isSaving}
-                  className="bg-gradient-to-r from-[#118ff3] to-[#0c5798] hover:from-[#0c5798] hover:to-[#118ff3] text-white rounded-xl shadow-lg shadow-[#118ff3]/30 px-6 py-6 h-auto"
+                  disabled={isSaving || !isHeadCoach}
+                  className="bg-gradient-to-r from-[#118ff3] to-[#0c5798] hover:from-[#0c5798] hover:to-[#118ff3] text-white rounded-xl shadow-lg shadow-[#118ff3]/30 px-6 py-6 h-auto disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSaving ? (
                     <>
@@ -574,30 +583,34 @@ export default function TeamSettingsPage() {
                 </div>
               </div>
 
-              {/* Invite Coaches - Only for Head Coaches */}
-              {isHeadCoach && (
-                <>
-                  <div className="border-t border-slate-200/50 pt-6">
-                    <div className="space-y-4">
-                      <div>
-                        <h3 className="text-lg font-semibold text-slate-900 mb-2">Invite Coaches</h3>
-                        <p className="text-slate-600 text-sm">
-                          Generate a one-time code to invite another coach to join your coaching staff.
-                        </p>
-                      </div>
-                      
-                      {!generatedCode ? (
-                        <motion.div
-                          animate={isGeneratingCode ? { scale: [1, 1.02, 1] } : {}}
-                          transition={{ duration: 0.5, repeat: isGeneratingCode ? Infinity : 0 }}
-                        >
-                          <Button 
-                            onClick={handleGenerateCoachCode}
-                            disabled={isGeneratingCode}
-                            className={`bg-gradient-to-r from-[#118ff3] to-[#0c5798] hover:from-[#0c5798] hover:to-[#118ff3] text-white rounded-xl shadow-lg shadow-[#118ff3]/30 px-6 py-6 h-auto transition-all ${
-                              isGeneratingCode ? 'opacity-75 cursor-not-allowed' : ''
-                            }`}
-                          >
+              {/* Invite Coaches - Show for all coaches but restrict functionality */}
+              <div className="border-t border-slate-200/50 pt-6">
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-900 mb-2">Invite Coaches</h3>
+                    <p className="text-slate-600 text-sm">
+                      Generate a one-time code to invite another coach to join your coaching staff.
+                    </p>
+                  </div>
+                  
+                  {!isHeadCoach && (
+                    <div className="mb-4">
+                      <PermissionLabel message="Only head coaches can invite other coaches" />
+                    </div>
+                  )}
+                  
+                  {!generatedCode ? (
+                    <motion.div
+                      animate={isGeneratingCode ? { scale: [1, 1.02, 1] } : {}}
+                      transition={{ duration: 0.5, repeat: isGeneratingCode ? Infinity : 0 }}
+                    >
+                      <Button 
+                        onClick={handleGenerateCoachCode}
+                        disabled={isGeneratingCode || !isHeadCoach}
+                        className={`bg-gradient-to-r from-[#118ff3] to-[#0c5798] hover:from-[#0c5798] hover:to-[#118ff3] text-white rounded-xl shadow-lg shadow-[#118ff3]/30 px-6 py-6 h-auto transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                          isGeneratingCode ? 'opacity-75 cursor-not-allowed' : ''
+                        }`}
+                      >
                             {isGeneratingCode ? (
                               <>
                                 <Key className="w-4 h-4 mr-2 animate-spin" />
@@ -649,8 +662,8 @@ export default function TeamSettingsPage() {
                           >
                             <Button 
                               onClick={handleGenerateCoachCode}
-                              disabled={isGeneratingCode}
-                              className={`w-full sm:w-auto bg-white/80 backdrop-blur-xl border border-slate-200/50 text-slate-700 hover:bg-white hover:border-slate-300 rounded-xl shadow-lg transition-all ${
+                              disabled={isGeneratingCode || !isHeadCoach}
+                              className={`w-full sm:w-auto bg-white/80 backdrop-blur-xl border border-slate-200/50 text-slate-700 hover:bg-white hover:border-slate-300 rounded-xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                                 isGeneratingCode ? 'opacity-75 cursor-not-allowed' : ''
                               }`}
                             >
@@ -677,8 +690,6 @@ export default function TeamSettingsPage() {
                       </div>
                     </div>
                   </div>
-                </>
-              )}
             </CardContent>
           </Card>
         )}
@@ -690,6 +701,11 @@ export default function TeamSettingsPage() {
               <CardTitle className="text-xl font-bold text-red-600">Danger Zone</CardTitle>
             </CardHeader>
             <CardContent className="pt-6 space-y-4">
+              {!isHeadCoach && (
+                <div className="mb-4">
+                  <PermissionLabel message="Only head coaches can delete the team" />
+                </div>
+              )}
               <div>
                 <h4 className="font-bold text-slate-900 mb-2">Delete Team</h4>
                 <p className="text-sm text-slate-600 mb-4">
@@ -697,8 +713,8 @@ export default function TeamSettingsPage() {
                 </p>
                 <Button
                   onClick={handleDeleteTeam}
-                  disabled={isDeleting}
-                  className="bg-red-600 hover:bg-red-700 text-white border border-red-600 hover:border-red-700 rounded-xl shadow-lg px-6 py-6 h-auto"
+                  disabled={isDeleting || !isHeadCoach}
+                  className="bg-red-600 hover:bg-red-700 text-white border border-red-600 hover:border-red-700 rounded-xl shadow-lg px-6 py-6 h-auto disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isDeleting ? (
                     <>

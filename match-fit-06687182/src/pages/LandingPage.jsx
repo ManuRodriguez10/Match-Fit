@@ -71,11 +71,11 @@ export default function LandingPage() {
             <div className="flex justify-center lg:justify-start">
               <div className="relative">
                 <div className="absolute inset-0 bg-[#118ff3]/20 blur-xl rounded-full scale-150" />
-                <img
-                  src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68c332f7b5426ee106687182/32285dc04_MatchFitLogo.png"
-                  alt="MatchFit Logo"
+              <img
+                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68c332f7b5426ee106687182/32285dc04_MatchFitLogo.png"
+                alt="MatchFit Logo"
                   className="h-16 md:h-20 w-auto relative"
-                />
+              />
               </div>
             </div>
 
@@ -132,7 +132,7 @@ export default function LandingPage() {
                     className={`w-12 h-12 rounded-xl ${feature.color} flex items-center justify-center flex-shrink-0 shadow-sm`}
                   >
                     <feature.icon className={`w-6 h-6 ${feature.iconColor}`} />
-                  </div>
+                </div>
                   <p className="text-lg text-gray-700 font-medium">{feature.text}</p>
                 </div>
               ))}
@@ -307,9 +307,9 @@ export default function LandingPage() {
                 <h3 className="text-2xl font-bold text-gray-900 mb-3">Lineup Builder</h3>
                 <p className="text-gray-600 leading-relaxed">
                   Create game lineups with our intuitive interface. Publish lineups and notify your team instantly.
-                </p>
+                    </p>
+                </div>
               </div>
-            </div>
 
             {/* Smart Scheduling - Full width card at bottom */}
             <div className="md:col-span-2 group">
@@ -362,11 +362,11 @@ export default function LandingPage() {
             the game.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              onClick={handleSignUp}
-              size="lg"
+          <Button
+            onClick={handleSignUp}
+            size="lg"
               className="bg-white text-[#118ff3] hover:bg-gray-100 px-10 py-6 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all group"
-            >
+          >
               Get Started Free
               <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Button>
@@ -377,7 +377,7 @@ export default function LandingPage() {
               className="border-2 border-white/30 text-white hover:bg-white/10 px-10 py-6 text-lg font-semibold rounded-xl transition-all bg-transparent"
             >
               Log In
-            </Button>
+          </Button>
           </div>
         </div>
       </div>
