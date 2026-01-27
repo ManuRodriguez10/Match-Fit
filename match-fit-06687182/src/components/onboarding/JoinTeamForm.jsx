@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, LogOut, Users } from "lucide-react";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 
 export default function JoinTeamForm({ user, onComplete, onBack }) {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ export default function JoinTeamForm({ user, onComplete, onBack }) {
       navigate(createPageUrl("LandingPage"));
     } catch (error) {
       console.error("Error logging out:", error);
+      toast.error("Failed to log out. Please try again.");
     }
   };
 

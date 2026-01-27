@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UserProvider, useUser } from "@/components/UserContext";
+import { toast } from "sonner";
 
 function LayoutContent({ children, currentPageName }) {
   const location = useLocation();
@@ -40,6 +41,7 @@ function LayoutContent({ children, currentPageName }) {
       window.location.href = createPageUrl("Login");
     } catch (error) {
       console.error("Error logging out:", error);
+      toast.error("Failed to log out. Please try again.");
     }
   };
 

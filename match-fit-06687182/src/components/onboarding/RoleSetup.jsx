@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Users, UserCheck, LogOut, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { toast } from "sonner";
 
 const COUNTRY_CODES = [
   { code: "+1", country: "US/Canada" },
@@ -99,6 +100,7 @@ export default function RoleSetup({ user, onComplete }) {
       navigate(createPageUrl("LandingPage"));
     } catch (error) {
       console.error("Error logging out:", error);
+      toast.error("Failed to log out. Please try again.");
     }
   };
 
@@ -150,7 +152,7 @@ export default function RoleSetup({ user, onComplete }) {
       onComplete();
     } catch (error) {
       console.error("Error updating user role:", error);
-      alert("There was an error saving your information. Please try again.");
+      toast.error("There was an error saving your information. Please try again.");
     }
     setIsSubmitting(false);
   };

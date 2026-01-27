@@ -278,8 +278,6 @@ export default function CoachLineupBuilder({ user }) {
         published: existingLineup?.published || false
       };
 
-      console.log("Attempting to save lineup with data:", JSON.stringify(lineupData, null, 2));
-
       if (existingLineup) {
         const { error } = await supabase
           .from("lineups")
