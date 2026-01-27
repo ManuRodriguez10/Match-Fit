@@ -10,6 +10,7 @@ import { format, isPast, parseISO } from "date-fns";
 import LineupField from "./LineupField";
 import PlayerSelectionModal from "./PlayerSelectionModal";
 import { toast } from "sonner";
+import { getErrorMessage, formatOperationError, isNetworkError } from "@/utils/errorHandling";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { motion } from "framer-motion";
@@ -93,7 +94,7 @@ export default function CoachLineupBuilder({ user }) {
       setPlayers(allPlayers);
     } catch (error) {
       console.error("Error loading data:", error);
-      toast.error("Failed to load data");
+      toast.error(formatOperationError(error, "load data", isNetworkError(error)));
     }
     setIsLoading(false);
   };
@@ -134,7 +135,7 @@ export default function CoachLineupBuilder({ user }) {
       }
     } catch (error) {
       console.error("Error loading lineup:", error);
-      toast.error("Failed to load lineup for event.");
+      toast.error(formatOperationError(error, "load lineup", isNetworkError(error)));
     }
   };
 
@@ -369,15 +370,9 @@ export default function CoachLineupBuilder({ user }) {
       }
     } catch (error) {
       console.error("Error saving lineup:", error);
-      console.error("Error code:", error.code);
-      console.error("Error message:", error.message);
-      console.error("Error details:", error.details);
-      console.error("Error hint:", error.hint);
-      // Show more detailed error message
-      const errorMessage = error.message || "Failed to save lineup";
-      const errorDetails = error.details ? `: ${error.details}` : "";
-      const errorHint = error.hint ? ` (${error.hint})` : "";
-      toast.error(`Failed to save lineup: ${errorMessage}${errorDetails}${errorHint}`);
+      const isNetwork = isNetworkError(error);
+      const errorMessage = formatOperationError(error, "save lineup", isNetwork);
+      toast.error(errorMessage);
     } finally {
       setIsSaving(false);
     }
@@ -466,11 +461,9 @@ export default function CoachLineupBuilder({ user }) {
       setIsEditMode(false);
     } catch (error) {
       console.error("Error publishing lineup:", error);
-      // Show more detailed error message
-      const errorMessage = error.message || "Failed to publish lineup";
-      const errorDetails = error.details ? `: ${error.details}` : "";
-      const errorHint = error.hint ? ` (${error.hint})` : "";
-      toast.error(`Failed to publish lineup: ${errorMessage}${errorDetails}${errorHint}`);
+      const isNetwork = isNetworkError(error);
+      const errorMessage = formatOperationError(error, "publish lineup", isNetwork);
+      toast.error(errorMessage);
     } finally {
       setIsPublishing(false);
     }
@@ -516,7 +509,8 @@ export default function CoachLineupBuilder({ user }) {
       toast.success("Lineup deleted");
     } catch (error) {
       console.error("Error deleting lineup:", error);
-      toast.error("Failed to delete lineup");
+      const errorMessage = formatOperationError(error, "delete lineup", isNetworkError(error));
+      toast.error(errorMessage);
     }
   };
 

@@ -23,6 +23,7 @@ import Login from "./Login";
 import Signup from "./Signup";
 
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
+import ErrorBoundary from "@/components/common/ErrorBoundary";
 
 const PAGES = {
     
@@ -105,7 +106,9 @@ function PagesContent() {
 export default function Pages() {
     return (
         <Router>
-            <PagesContent />
+            <ErrorBoundary>
+                <PagesContent />
+            </ErrorBoundary>
         </Router>
     );
 }

@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Save } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { preventRapidSubmit } from "@/utils/formUtils";
 
 const COUNTRIES = [
   "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina",
@@ -252,9 +253,7 @@ export default function PlayerProfileForm({ user, onUpdate }) {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
+  const submitProfile = async () => {
     // Validate jersey number
     const jerseyValidation = validateJerseyNumber(formData.jersey_number);
     if (jerseyValidation) {
@@ -326,8 +325,18 @@ export default function PlayerProfileForm({ user, onUpdate }) {
     } catch (error) {
       console.error("Error updating profile:", error);
       toast.error("Failed to update profile. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
+  };
+
+  // Protect against rapid submissions
+  const protectedSubmit = preventRapidSubmit(submitProfile, 2000);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (isSubmitting) return;
+    await protectedSubmit();
   };
 
   return (

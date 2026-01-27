@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Copy, Users, Save, Trash2, Key } from "lucide-react";
 import { toast } from "sonner";
+import { formatOperationError, isNetworkError } from "@/utils/errorHandling";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { formatDistanceToNow } from "date-fns";
@@ -61,7 +62,7 @@ export default function TeamSettingsPage() {
 
       if (error) {
         console.error("Error loading team:", error);
-        toast.error("Failed to load team data");
+        toast.error(formatOperationError(error, "load team data", isNetworkError(error)));
       } else {
         setTeam(teamData);
         setTeamData({
@@ -72,7 +73,7 @@ export default function TeamSettingsPage() {
       }
     } catch (error) {
       console.error("Error loading team data:", error);
-      toast.error("Failed to load team data");
+      toast.error(formatOperationError(error, "load team data", isNetworkError(error)));
     }
     setIsLoading(false);
   };
@@ -170,7 +171,7 @@ export default function TeamSettingsPage() {
       toast.success("Team settings saved successfully!");
     } catch (error) {
       console.error("Error saving team:", error);
-      toast.error("Failed to save team settings");
+      toast.error(formatOperationError(error, "save team settings", isNetworkError(error)));
     }
     setIsSaving(false);
   };
@@ -213,7 +214,7 @@ export default function TeamSettingsPage() {
       navigate(createPageUrl("Dashboard"), { replace: true });
     } catch (error) {
       console.error("Error deleting team:", error);
-      toast.error(error.message || "Failed to delete team. Please try again.");
+      toast.error(formatOperationError(error, "delete team", isNetworkError(error)));
       setIsDeleting(false);
       return;
     }
@@ -279,7 +280,7 @@ export default function TeamSettingsPage() {
       if (error?.code === "42P01") {
         toast.error("Missing coach_invites table in Supabase. Please run the latest SQL migration.");
       } else {
-        toast.error(error.message || "Failed to generate code. Please try again.");
+        toast.error(formatOperationError(error, "generate coach invite code", isNetworkError(error)));
       }
     } finally {
       setIsGeneratingCode(false);

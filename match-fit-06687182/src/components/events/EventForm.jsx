@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +9,8 @@ import { X, Calendar, MapPin, Users, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { formatOperationError, isNetworkError } from "@/utils/errorHandling";
+import { preventRapidSubmit } from "@/utils/formUtils";
 
 export default function EventForm({ event, onSubmit, onCancel, initialDate }) {
   // Format initial date if provided
@@ -25,7 +27,7 @@ export default function EventForm({ event, onSubmit, onCancel, initialDate }) {
     return "";
   };
 
-  const [formData, setFormData] = useState({
+  const initialFormData = {
     title: event?.title || "",
     type: event?.type || "practice",
     date: getInitialDate(),
@@ -33,13 +35,36 @@ export default function EventForm({ event, onSubmit, onCancel, initialDate }) {
     description: event?.description || "",
     opponent: event?.opponent || "",
     required: event?.required ?? true
-  });
+  };
+
+  const [formData, setFormData] = useState(initialFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
+  const hasUnsavedChangesRef = useRef(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (isSubmitting) return;
+  // Check if form has been modified
+  const hasUnsavedChanges = JSON.stringify(formData) !== JSON.stringify(initialFormData);
+
+  // Update ref when form data changes
+  useEffect(() => {
+    hasUnsavedChangesRef.current = hasUnsavedChanges;
+  }, [hasUnsavedChanges]);
+
+  // Warn about unsaved changes on browser navigation
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedChangesRef.current && !isSubmitting) {
+        e.preventDefault();
+        e.returnValue = "You have unsaved changes. Are you sure you want to leave?";
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isSubmitting]);
+
+  const submitEvent = async () => {
     setFormError("");
     
     // Check if the event date is in the past
@@ -67,13 +92,35 @@ export default function EventForm({ event, onSubmit, onCancel, initialDate }) {
     setIsSubmitting(true);
     try {
       await onSubmit(eventData);
+      // Reset unsaved changes flag after successful submit
+      hasUnsavedChangesRef.current = false;
     } catch (error) {
-      const message = error?.message || "Unable to save event. Please try again.";
+      const isNetwork = isNetworkError(error);
+      const message = formatOperationError(error, "save event", isNetwork);
       setFormError(message);
       toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Protect against rapid submissions
+  const protectedSubmit = preventRapidSubmit(submitEvent, 2000);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (isSubmitting) return;
+    await protectedSubmit();
+  };
+
+  const handleCancel = () => {
+    if (hasUnsavedChanges && !isSubmitting) {
+      const confirmed = window.confirm("You have unsaved changes. Are you sure you want to cancel?");
+      if (!confirmed) {
+        return;
+      }
+    }
+    onCancel();
   };
 
   const handleInputChange = (field, value) => {
@@ -95,7 +142,7 @@ export default function EventForm({ event, onSubmit, onCancel, initialDate }) {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={onCancel}
+            onClick={handleCancel}
             className="rounded-xl hover:bg-slate-100"
           >
             <X className="w-5 h-5" />
@@ -231,7 +278,7 @@ export default function EventForm({ event, onSubmit, onCancel, initialDate }) {
           <Button 
             type="button" 
             variant="outline" 
-            onClick={onCancel}
+            onClick={handleCancel}
             className="rounded-xl border-slate-200 hover:bg-slate-50"
           >
             Cancel
