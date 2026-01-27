@@ -344,14 +344,16 @@ export default function LandingPage() {
 
       {/* CTA Section */}
       <div className="relative py-20 lg:py-28 overflow-hidden">
-        {/* Animated gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#118ff3] to-[#0c5798]" />
-        <div
-          className="absolute inset-0 opacity-30"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fillRule='evenodd'%3E%3Cg fill='%23ffffff' fillOpacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }}
-        />
+        {/* Modern gradient background with mesh effect */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#118ff3] via-[#0c5798] to-[#0a4a85]" />
+        {/* Animated gradient orbs overlay */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#118ff3]/20 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#0c5798]/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+          <div className="absolute top-1/2 right-0 w-72 h-72 bg-white/5 rounded-full blur-2xl animate-pulse" style={{ animationDelay: "2s" }} />
+        </div>
+        {/* Subtle mesh gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/5 via-transparent to-transparent" />
 
         <div className="container mx-auto px-4 text-center relative z-10">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6 text-balance">

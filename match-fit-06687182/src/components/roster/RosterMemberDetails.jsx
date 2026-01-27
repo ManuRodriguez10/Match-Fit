@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { supabase } from "@/api/supabaseClient";
+import { supabase, safeRpc } from "@/api/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { X, Trash2, Mail, Phone, Calendar, Ruler, Weight, Globe, Users, Shield, Target, Zap, TrendingUp } from "lucide-react";
 import { format } from "date-fns";
@@ -87,7 +87,7 @@ export default function RosterMemberDetails({ member, currentUser, onClose, onPl
 
     setIsRemoving(true);
     try {
-      const { error } = await supabase.rpc('remove_player_from_team', {
+      const { error } = await safeRpc('remove_player_from_team', {
         player_profile_id: member.id
       });
 

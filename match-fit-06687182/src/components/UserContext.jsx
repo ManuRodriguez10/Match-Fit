@@ -23,6 +23,7 @@ export const UserProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
   const isLoadingRef = useRef(true);
+  const currentUserRef = useRef(null);
 
   const loadCurrentUser = async () => {
     setIsLoadingUser(true);
@@ -124,13 +125,17 @@ export const UserProvider = ({ children }) => {
             });
         }
         
-        setCurrentUser(normalizeUser(user));
+        const normalizedUser = normalizeUser(user);
+        setCurrentUser(normalizedUser);
+        currentUserRef.current = normalizedUser;
       } else {
         setCurrentUser(null);
+        currentUserRef.current = null;
       }
     } catch (error) {
       console.log("User not authenticated:", error);
       setCurrentUser(null);
+      currentUserRef.current = null;
     } finally {
       // ALWAYS set loading to false, even if there were errors
       setIsLoadingUser(false);
@@ -166,111 +171,110 @@ export const UserProvider = ({ children }) => {
       }
     }, 3000); // 3 second timeout
     
+    // Handle tab visibility changes - refresh session when tab becomes visible
+    const handleVisibilityChange = async () => {
+      if (!document.hidden && hasCompletedInitialLoadRef.current) {
+        // Tab became visible and initial load is complete
+        try {
+          // Check if we have a session
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+          
+          if (sessionError || !session) {
+            // No session - user might have been logged out
+            // Clear user state without triggering loading state
+            if (currentUserRef.current) {
+              setCurrentUser(null);
+              currentUserRef.current = null;
+              setIsLoadingUser(false);
+            }
+            return;
+          }
+          
+          // Session exists, check if it needs refresh
+          const now = Math.floor(Date.now() / 1000);
+          const expiresAt = session.expires_at;
+          
+          // Only refresh if session is close to expiring (within 5 minutes)
+          if (expiresAt && expiresAt - now < 300) {
+            // Refresh session - TOKEN_REFRESHED event will handle user reload
+            const { error: refreshError } = await supabase.auth.refreshSession();
+            if (refreshError) {
+              console.warn("Error refreshing session:", refreshError);
+            }
+            // If refresh succeeds, TOKEN_REFRESHED event will fire and reload user
+          }
+          // If session is valid and not expiring, do nothing - user should already be loaded
+        } catch (error) {
+          console.warn("Error in visibility change handler:", error);
+          // Don't call loadCurrentUser - just log the error
+        }
+      }
+    };
+
+    // Also handle window focus as a fallback (some browsers may not fire visibilitychange)
+    const handleWindowFocus = async () => {
+      if (hasCompletedInitialLoadRef.current) {
+        await handleVisibilityChange();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleWindowFocus);
+
     const {
       data: { subscription }
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      // Don't process auth state changes during initial load
+      // Process critical auth events immediately - these are needed for session recovery after tab switches
+      if (_event === 'TOKEN_REFRESHED' || _event === 'SIGNED_IN') {
+        // Token was refreshed or user was signed in - reload user to ensure everything is in sync
+        // Only reload if initial load is complete to avoid double-loading
+        if (hasCompletedInitialLoadRef.current) {
+          await loadCurrentUser();
+        } else {
+          // Still in initial load, let the initial load process handle it
+          // But don't skip it completely - we need to ensure user gets loaded
+          // If we're here, it means initial load hasn't completed yet, so let it continue
+        }
+        return;
+      }
+      
+      if (_event === 'INITIAL_SESSION') {
+        // INITIAL_SESSION fires when Supabase initializes - handle it appropriately
+        if (hasCompletedInitialLoadRef.current) {
+          // Initial load is complete, but we got INITIAL_SESSION (e.g., after tab switch)
+          // Only reload if we don't have a current user
+          if (!currentUserRef.current) {
+            await loadCurrentUser();
+          }
+        }
+        // If still in initial load, let the initial load process handle it
+        return;
+      }
+      
+      // Don't process other auth state changes during initial load
       // Only process after initial load is complete
       if (isInitialLoad || !hasCompletedInitialLoad || !hasCompletedInitialLoadRef.current) {
         console.log("Skipping auth state change during initial load:", _event);
         return;
       }
       
-      // Ignore INITIAL_SESSION - don't reload, page should stay as-is when tab becomes visible
-      if (_event === 'INITIAL_SESSION') {
-        return;
-      }
-      
-      // Only process meaningful auth state changes
-      if (_event === 'SIGNED_OUT' || _event === 'SIGNED_IN' || _event === 'TOKEN_REFRESHED') {
-        setIsLoadingUser(true);
-        isLoadingRef.current = true;
-        try {
-          if (session?.user) {
-            // Fetch profile when auth state changes
-            let profileData = null;
-            try {
-              const { data: fetchedProfile, error: profileError } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', session.user.id)
-                .maybeSingle();
-              
-              // If profile doesn't exist, try to create it
-              if (!fetchedProfile && !profileError) {
-                console.log("Profile not found, creating one...");
-                const { data: newProfile, error: createError } = await supabase
-                  .from('profiles')
-                  .insert({
-                    id: session.user.id,
-                    full_name: '',
-                    role: null,
-                    team_role: null
-                  })
-                  .select()
-                  .single();
-                
-                if (createError) {
-                  console.error("Error creating profile:", createError);
-                } else {
-                  profileData = newProfile;
-                }
-              } else if (profileError) {
-                console.error("Error fetching profile:", profileError);
-              } else {
-                profileData = fetchedProfile;
-              }
-            } catch (error) {
-              console.error("Profile fetch error:", error);
-            }
-            
-            const user = {
-              ...session.user,
-              ...(profileData || {}),
-              full_name: profileData?.full_name || session.user.user_metadata?.full_name || session.user.email,
-              role: profileData?.role || session.user.user_metadata?.role || null,
-              team_role: profileData?.team_role || session.user.user_metadata?.team_role || null,
-              team_id: profileData?.team_id || null,
-              jersey_number: profileData?.jersey_number || null,
-              position: profileData?.position || null
-            };
-            
-            // If profile exists but team_role is missing, and user_metadata has it, update the profile
-            if (profileData && !profileData.team_role && session.user.user_metadata?.team_role) {
-              // Silently update the profile in the background
-              supabase
-                .from('profiles')
-                .update({ team_role: session.user.user_metadata.team_role })
-                .eq('id', session.user.id)
-                .then(({ error }) => {
-                  if (error) {
-                    console.error("Error syncing team_role to profile:", error);
-                  } else {
-                    // Reload user to get updated profile
-                    loadCurrentUser();
-                  }
-                });
-            }
-            
-            setCurrentUser(normalizeUser(user));
-          } else {
-            setCurrentUser(null);
-          }
-        } catch (error) {
-          console.error("Error in auth state change:", error);
-          setCurrentUser(null);
-        } finally {
-          setIsLoadingUser(false);
-          isLoadingRef.current = false;
-        }
+      // Only process SIGNED_OUT - SIGNED_IN is handled above
+      if (_event === 'SIGNED_OUT') {
+        // User signed out, clear the user state
+        setCurrentUser(null);
+        currentUserRef.current = null;
+        setIsLoadingUser(false);
+        isLoadingRef.current = false;
       }
     });
 
     return () => {
       clearTimeout(timeoutId);
       subscription.unsubscribe();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleWindowFocus);
     };
-  }, []);
+  }, []); // Empty dependency array - we use refs to access current values
 
   return (
     <UserContext.Provider value={{ currentUser, isLoadingUser, loadCurrentUser }}>
