@@ -32,6 +32,7 @@ export default function CoachLineupBuilder({ user }) {
   const [selectedPosition, setSelectedPosition] = useState(null);
   const [benchSlots, setBenchSlots] = useState(10);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [loadedUpdatedAt, setLoadedUpdatedAt] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -116,6 +117,8 @@ export default function CoachLineupBuilder({ user }) {
         setFormation(lineup.formation);
         setStartingLineup(lineup.starting_lineup || []);
         setSubstitutes(lineup.substitutes || []);
+        // Store updated_at timestamp for optimistic locking
+        setLoadedUpdatedAt(lineup.updated_at || lineup.created_at || null);
         if (lineup.substitutes && lineup.substitutes.length > 10) {
           setBenchSlots(lineup.substitutes.length);
         } else {
@@ -127,6 +130,7 @@ export default function CoachLineupBuilder({ user }) {
         setStartingLineup([]);
         setSubstitutes([]);
         setBenchSlots(10);
+        setLoadedUpdatedAt(null);
       }
     } catch (error) {
       console.error("Error loading lineup:", error);
@@ -261,10 +265,57 @@ export default function CoachLineupBuilder({ user }) {
     return assigned;
   };
 
+  const checkForConflict = async () => {
+    if (!existingLineup || !loadedUpdatedAt) {
+      return false; // No conflict check needed for new lineups
+    }
+
+    try {
+      // Fetch current lineup from database to check updated_at
+      const { data: currentLineup, error } = await supabase
+        .from("lineups")
+        .select("updated_at, created_at")
+        .eq("id", existingLineup.id)
+        .single();
+
+      if (error) {
+        // If lineup doesn't exist anymore, it's not a conflict - it was deleted
+        if (error.code === 'PGRST116') {
+          return true; // Treat as conflict - lineup was deleted
+        }
+        // Other errors - proceed anyway, let the save operation handle it
+        return false;
+      }
+
+      // Compare timestamps - if they don't match, someone else modified it
+      const currentUpdatedAt = currentLineup?.updated_at || currentLineup?.created_at;
+      if (currentUpdatedAt && loadedUpdatedAt && currentUpdatedAt !== loadedUpdatedAt) {
+        return true; // Conflict detected
+      }
+
+      return false; // No conflict
+    } catch (error) {
+      console.error("Error checking for conflict:", error);
+      // On error, proceed anyway - let the save operation handle it
+      return false;
+    }
+  };
+
   const handleSaveDraft = async () => {
     if (!selectedEventId) {
       toast.error("Please select a game event");
       return;
+    }
+
+    // Check for conflicts before saving
+    if (existingLineup) {
+      const hasConflict = await checkForConflict();
+      if (hasConflict) {
+        toast.error("This lineup was modified by another coach. Reloading the latest version...");
+        await loadLineupForEvent(selectedEventId);
+        setIsEditMode(false);
+        return;
+      }
     }
 
     setIsSaving(true);
@@ -312,6 +363,8 @@ export default function CoachLineupBuilder({ user }) {
           throw error;
         }
         setExistingLineup(data);
+        // Store updated_at for new lineup
+        setLoadedUpdatedAt(data.updated_at || data.created_at || null);
         toast.success("Lineup draft created");
       }
     } catch (error) {
@@ -339,6 +392,17 @@ export default function CoachLineupBuilder({ user }) {
     if (startingLineup.length !== 11) {
       toast.error("Please assign all 11 starting positions");
       return;
+    }
+
+    // Check for conflicts before publishing
+    if (existingLineup) {
+      const hasConflict = await checkForConflict();
+      if (hasConflict) {
+        toast.error("This lineup was modified by another coach. Reloading the latest version...");
+        await loadLineupForEvent(selectedEventId);
+        setIsEditMode(false);
+        return;
+      }
     }
 
     setIsPublishing(true);
@@ -369,6 +433,8 @@ export default function CoachLineupBuilder({ user }) {
           throw error;
         }
         setExistingLineup(prev => ({ ...prev, published: true }));
+        // Reload to get updated timestamp
+        await loadLineupForEvent(selectedEventId);
       } else {
         const { data, error } = await supabase
           .from("lineups")
@@ -387,6 +453,8 @@ export default function CoachLineupBuilder({ user }) {
           throw error;
         }
         setExistingLineup(data);
+        // Store updated_at for new lineup
+        setLoadedUpdatedAt(data.updated_at || data.created_at || null);
       }
 
       // Send email notifications to all players
