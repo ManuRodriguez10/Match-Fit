@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Copy, Users, Save, Trash2, Key, ArrowLeft, Info, UserPlus, AlertTriangle } from "lucide-react";
+import { Copy, Users, Save, Trash2, Key, ArrowLeft, Info, UserPlus, AlertTriangle, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -574,19 +574,24 @@ export default function TeamSettingsPage() {
                 </div>
               </div>
 
-              {/* Invite Coaches - Only for Head Coaches */}
-              {isHeadCoach && (
-                <>
-                  <div className="border-t border-slate-200/50 pt-6">
-                    <div className="space-y-4">
-                      <div>
-                        <h3 className="text-lg font-semibold text-slate-900 mb-2">Invite Coaches</h3>
-                        <p className="text-slate-600 text-sm">
-                          Generate a one-time code to invite another coach to join your coaching staff.
-                        </p>
-                      </div>
-                      
-                      {!generatedCode ? (
+              {/* Invite Coaches - Full access for head coach, crossed off for assistant coach */}
+              <div className={`border-t border-slate-200/50 pt-6 ${!isHeadCoach ? "opacity-60" : ""}`}>
+                {!isHeadCoach && (
+                  <p className="text-amber-700 text-sm font-medium mb-4 flex items-center gap-2">
+                    <Lock className="w-4 h-4 flex-shrink-0" />
+                    This section is only available to the head coach.
+                  </p>
+                )}
+                <div className={!isHeadCoach ? "pointer-events-none select-none" : ""}>
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-slate-900 mb-2">Invite Coaches</h3>
+                      <p className="text-slate-600 text-sm">
+                        Generate a one-time code to invite another coach to join your coaching staff.
+                      </p>
+                    </div>
+                    
+                    {!generatedCode ? (
                         <motion.div
                           animate={isGeneratingCode ? { scale: [1, 1.02, 1] } : {}}
                           transition={{ duration: 0.5, repeat: isGeneratingCode ? Infinity : 0 }}
@@ -677,41 +682,50 @@ export default function TeamSettingsPage() {
                       </div>
                     </div>
                   </div>
-                </>
-              )}
+                </div>
             </CardContent>
           </Card>
         )}
 
-        {/* Danger Zone View */}
+        {/* Danger Zone View - Full access for head coach, crossed off for assistant coach */}
         {view === "danger" && (
           <Card className="bg-white/80 backdrop-blur-xl border border-red-200/50 shadow-lg rounded-3xl">
             <CardHeader className="border-b border-red-200/50">
               <CardTitle className="text-xl font-bold text-red-600">Danger Zone</CardTitle>
             </CardHeader>
             <CardContent className="pt-6 space-y-4">
-              <div>
-                <h4 className="font-bold text-slate-900 mb-2">Delete Team</h4>
-                <p className="text-sm text-slate-600 mb-4">
-                  Once you delete your team, there is no going back. This will permanently delete all team data including events, lineups, and disassociate all members from the team.
-                </p>
-                <Button
-                  onClick={handleDeleteTeam}
-                  disabled={isDeleting}
-                  className="bg-red-600 hover:bg-red-700 text-white border border-red-600 hover:border-red-700 rounded-xl shadow-lg px-6 py-6 h-auto"
-                >
-                  {isDeleting ? (
-                    <>
-                      <Trash2 className="w-4 h-4 mr-2 animate-spin" />
-                      Deleting Team...
-                    </>
-                  ) : (
-                    <>
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Delete Team
-                    </>
-                  )}
-                </Button>
+              <div className={!isHeadCoach ? "opacity-60" : ""}>
+                {!isHeadCoach && (
+                  <p className="text-amber-700 text-sm font-medium mb-4 flex items-center gap-2">
+                    <Lock className="w-4 h-4 flex-shrink-0" />
+                    Only the head coach can delete the team.
+                  </p>
+                )}
+                <div className={!isHeadCoach ? "pointer-events-none select-none" : ""}>
+                  <div>
+                    <h4 className="font-bold text-slate-900 mb-2">Delete Team</h4>
+                    <p className="text-sm text-slate-600 mb-4">
+                      Once you delete your team, there is no going back. This will permanently delete all team data including events, lineups, and disassociate all members from the team.
+                    </p>
+                    <Button
+                      onClick={handleDeleteTeam}
+                      disabled={isDeleting || !isHeadCoach}
+                      className="bg-red-600 hover:bg-red-700 text-white border border-red-600 hover:border-red-700 rounded-xl shadow-lg px-6 py-6 h-auto"
+                    >
+                      {isDeleting ? (
+                        <>
+                          <Trash2 className="w-4 h-4 mr-2 animate-spin" />
+                          Deleting Team...
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete Team
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
