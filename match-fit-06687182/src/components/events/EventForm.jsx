@@ -13,24 +13,66 @@ import { formatOperationError, isNetworkError } from "@/utils/errorHandling";
 import { preventRapidSubmit } from "@/utils/formUtils";
 
 export default function EventForm({ event, onSubmit, onCancel, initialDate }) {
-  // Format initial date if provided
-  const getInitialDate = () => {
-    if (event?.date) {
-      return format(new Date(event.date), "yyyy-MM-dd'T'HH:mm");
+  // Generate time options: every hour at :00, :15, :30, :45
+  const generateTimeOptions = () => {
+    const times = [];
+    for (let hour = 0; hour < 24; hour++) {
+      for (const minute of [0, 15, 30, 45]) {
+        const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+        const ampm = hour < 12 ? 'AM' : 'PM';
+        const displayTime = `${hour12}:${minute.toString().padStart(2, '0')} ${ampm}`;
+        times.push({ value: timeString, label: displayTime });
+      }
     }
-    if (initialDate) {
-      // Set to 9 AM by default if only date is provided
-      const date = new Date(initialDate);
-      date.setHours(9, 0, 0, 0);
-      return format(date, "yyyy-MM-dd'T'HH:mm");
-    }
-    return "";
+    return times;
   };
+
+  const timeOptions = generateTimeOptions();
+
+  // Get the closest 15-minute interval to the current time
+  const getClosestTimeInterval = () => {
+    const now = new Date();
+    const currentMinutes = now.getMinutes();
+    const currentHour = now.getHours();
+    
+    // Round to nearest 15-minute interval
+    let roundedMinutes = Math.round(currentMinutes / 15) * 15;
+    let finalHour = currentHour;
+    
+    // If rounding goes to 60, move to next hour
+    if (roundedMinutes === 60) {
+      finalHour = (currentHour + 1) % 24;
+      roundedMinutes = 0;
+    }
+    
+    return `${finalHour.toString().padStart(2, '0')}:${roundedMinutes.toString().padStart(2, '0')}`;
+  };
+
+  // Split date and time from initial data
+  const getInitialDateTime = () => {
+    let dateObj;
+    if (event?.date) {
+      dateObj = new Date(event.date);
+    } else if (initialDate) {
+      dateObj = new Date(initialDate);
+      dateObj.setHours(9, 0, 0, 0); // Default to 9 AM
+    } else {
+      return { date: "", time: getClosestTimeInterval() };
+    }
+    
+    const date = format(dateObj, "yyyy-MM-dd");
+    const time = format(dateObj, "HH:mm");
+    return { date, time };
+  };
+
+  const initialDateTime = getInitialDateTime();
 
   const initialFormData = {
     title: event?.title || "",
     type: event?.type || "practice",
-    date: getInitialDate(),
+    date: initialDateTime.date,
+    time: initialDateTime.time,
     location: event?.location || "",
     description: event?.description || "",
     opponent: event?.opponent || "",
@@ -67,8 +109,16 @@ export default function EventForm({ event, onSubmit, onCancel, initialDate }) {
   const submitEvent = async () => {
     setFormError("");
     
-    // Check if the event date is in the past
-    const eventDateTime = new Date(formData.date);
+    // Combine date and time into a datetime string
+    if (!formData.date || !formData.time) {
+      const message = "Please select both a date and time.";
+      setFormError(message);
+      toast.error(message);
+      return;
+    }
+    
+    const dateTimeString = `${formData.date}T${formData.time}`;
+    const eventDateTime = new Date(dateTimeString);
     const now = new Date();
 
     if (Number.isNaN(eventDateTime.getTime())) {
@@ -89,6 +139,8 @@ export default function EventForm({ event, onSubmit, onCancel, initialDate }) {
       ...formData,
       date: eventDateTime.toISOString()
     };
+    // Remove the separate time field before submitting
+    delete eventData.time;
     setIsSubmitting(true);
     try {
       await onSubmit(eventData);
@@ -185,20 +237,40 @@ export default function EventForm({ event, onSubmit, onCancel, initialDate }) {
             </Select>
           </div>
 
-          {/* Date & Time */}
+          {/* Date */}
           <div className="space-y-2">
             <Label htmlFor="date" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
               <Calendar className="w-4 h-4 text-[#118ff3]" />
-              Date & Time
+              Date
             </Label>
             <Input
               id="date"
-              type="datetime-local"
+              type="date"
               value={formData.date}
               onChange={(e) => handleInputChange("date", e.target.value)}
               required
               className="rounded-xl border-slate-200 focus:border-[#118ff3] focus:ring-[#118ff3]/20"
             />
+          </div>
+
+          {/* Time */}
+          <div className="space-y-2">
+            <Label htmlFor="time" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-[#118ff3]" />
+              Time
+            </Label>
+            <Select value={formData.time} onValueChange={(value) => handleInputChange("time", value)}>
+              <SelectTrigger className="rounded-xl border-slate-200 focus:border-[#118ff3] focus:ring-[#118ff3]/20">
+                <SelectValue placeholder="Select time" />
+              </SelectTrigger>
+              <SelectContent className="max-h-[300px]">
+                {timeOptions.map((timeOption) => (
+                  <SelectItem key={timeOption.value} value={timeOption.value}>
+                    {timeOption.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           
           {/* Location */}
