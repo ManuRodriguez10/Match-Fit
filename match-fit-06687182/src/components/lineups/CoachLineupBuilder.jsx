@@ -139,7 +139,7 @@ export default function CoachLineupBuilder({ user }) {
     }
   };
 
-  const getFieldPositions = () => {
+  const getFieldPositions = (formationOverride) => {
     const formations = {
       "4-4-2": [
         { name: "GK", label: "Goalkeeper", top: "85%", left: "50%" },
@@ -207,7 +207,21 @@ export default function CoachLineupBuilder({ user }) {
         { name: "RW", label: "Right Wing", top: "15%", left: "80%" }
       ]
     };
-    return formations[formation] || formations["4-4-2"];
+    const f = formationOverride ?? formation;
+    return formations[f] || formations["4-4-2"];
+  };
+
+  const handleFormationChange = (newFormation) => {
+    if (formation !== newFormation && (startingLineup.length > 0 || substitutes.length > 0)) {
+      const confirmed = window.confirm(
+        "Changing the formation will clear the lineup. Do you want to proceed?"
+      );
+      if (!confirmed) return;
+    }
+
+    setStartingLineup([]);
+    setSubstitutes([]);
+    setFormation(newFormation);
   };
 
   const handlePositionClick = (positionName) => {
@@ -221,6 +235,10 @@ export default function CoachLineupBuilder({ user }) {
         setSubstitutes([...substitutes, playerId]);
       }
     } else {
+      // Selecting for starting position - if player is on bench, remove from substitutes
+      if (substitutes.includes(playerId)) {
+        setSubstitutes(prev => prev.filter(id => id !== playerId));
+      }
       const existingIndex = startingLineup.findIndex(p => p.position === selectedPosition);
       if (existingIndex >= 0) {
         const updated = [...startingLineup];
@@ -259,10 +277,12 @@ export default function CoachLineupBuilder({ user }) {
     setBenchSlots(benchSlots - 1);
   };
 
-  const getAssignedPlayers = () => {
+  const getAssignedPlayers = (selectingForBench = true) => {
     const assigned = new Set();
     startingLineup.forEach(p => assigned.add(p.player_id || p.player_email));
-    substitutes.forEach(id => assigned.add(id));
+    if (selectingForBench) {
+      substitutes.forEach(id => assigned.add(id));
+    }
     return assigned;
   };
 
@@ -676,9 +696,9 @@ export default function CoachLineupBuilder({ user }) {
               <CardContent className="space-y-4 pt-6">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-700">Select Formation</label>
-                  <Select 
+                    <Select 
                     value={formation} 
-                    onValueChange={setFormation} 
+                    onValueChange={handleFormationChange}
                     disabled={isSelectedEventPast || (existingLineup?.published && !isEditMode)}
                   >
                     <SelectTrigger className="rounded-xl">
@@ -788,7 +808,7 @@ export default function CoachLineupBuilder({ user }) {
                     </Button>
                     <Button
                       onClick={handlePublish}
-                      disabled={isSaving || isPublishing || startingLineup.length !== 11}
+                      disabled={isSaving || isPublishing}
                       className="flex-1 bg-gradient-to-r from-[#118ff3] to-[#0c5798] hover:from-[#0c5798] hover:to-[#118ff3] text-white rounded-xl px-6 py-6 h-auto shadow-lg shadow-[#118ff3]/30"
                     >
                       {isPublishing ? (
@@ -952,7 +972,7 @@ export default function CoachLineupBuilder({ user }) {
       {showPlayerModal && (
         <PlayerSelectionModal
           players={players}
-          assignedPlayers={getAssignedPlayers()}
+          assignedPlayers={getAssignedPlayers(selectedPosition === "bench")}
           onSelect={handlePlayerSelect}
           onClose={() => {
             setShowPlayerModal(false);
