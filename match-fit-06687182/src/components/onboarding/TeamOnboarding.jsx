@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, Plus, LogIn, ArrowLeft, LogOut } from "lucide-react";
+import { Users, Plus, LogIn, LogOut } from "lucide-react";
 import { supabase } from "@/api/supabaseClient";
 import { createPageUrl } from "@/utils";
 import { useNavigate } from "react-router-dom";
@@ -62,62 +61,85 @@ export default function TeamOnboarding({ user, onComplete }) {
         {isCoach ? (
           // Coaches see two options: Create or Join
           <div>
-            <div className="text-center mb-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className="text-center mb-8"
+            >
               <div className="flex justify-center mb-4">
                 <img src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68c332f7b5426ee106687182/32285dc04_MatchFitLogo.png" alt="MatchFit Logo" className="h-12 w-auto object-contain" />
               </div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Team Setup</h1>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-[#118ff3] to-[#0c5798] bg-clip-text text-transparent mb-2">
+                Team Setup
+              </h1>
               <p className="text-gray-600">Create a new team or join an existing one</p>
-            </div>
+            </motion.div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
               {/* Create Team Card */}
-              <Card 
-                className="cursor-pointer hover:shadow-lg transition-all duration-300 border-2 hover:border-[var(--primary-main)]"
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                className="cursor-pointer"
                 onClick={() => setView("create")}
               >
-                <CardHeader className="text-center pb-6">
-                  <div className="w-16 h-16 mx-auto mb-4 bg-emerald-100 rounded-full flex items-center justify-center">
-                    <Plus className="w-8 h-8 text-emerald-600" />
+                <div className="backdrop-blur-md bg-white/80 rounded-2xl shadow-xl border border-white/20 overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
+                  {/* Gradient accent bar */}
+                  <div className="h-1.5 bg-gradient-to-r from-[#118ff3] to-[#0c5798]"></div>
+                  
+                  <div className="p-8 text-center">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center shadow-lg">
+                      <Plus className="w-8 h-8 text-white" />
+                    </div>
+                    <h2 className="text-xl font-bold bg-gradient-to-r from-[#118ff3] to-[#0c5798] bg-clip-text text-transparent mb-3">
+                      Create New Team
+                    </h2>
+                    <p className="text-gray-600 mb-4">
+                      Set up a new team and get a unique join code to invite players.
+                    </p>
+                    <ul className="text-sm text-gray-500 space-y-1 text-left max-w-xs mx-auto">
+                      <li>• Name your team</li>
+                      <li>• Get a unique team code</li>
+                      <li>• Invite players instantly</li>
+                      <li>• Full team management</li>
+                    </ul>
                   </div>
-                  <CardTitle className="text-xl">Create New Team</CardTitle>
-                </CardHeader>
-                <CardContent className="text-center">
-                  <p className="text-gray-600 mb-4">
-                    Set up a new team and get a unique join code to invite players.
-                  </p>
-                  <ul className="text-sm text-gray-500 space-y-1">
-                    <li>• Name your team</li>
-                    <li>• Get a unique team code</li>
-                    <li>• Invite players instantly</li>
-                    <li>• Full team management</li>
-                  </ul>
-                </CardContent>
-              </Card>
+                </div>
+              </motion.div>
 
               {/* Join Existing Team Card */}
-              <Card 
-                className="cursor-pointer hover:shadow-lg transition-all duration-300 border-2 hover:border-[var(--primary-main)]"
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="cursor-pointer"
                 onClick={() => setView("acceptCoachCode")}
               >
-                <CardHeader className="text-center pb-6">
-                  <div className="w-16 h-16 mx-auto mb-4 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Users className="w-8 h-8 text-blue-600" />
+                <div className="backdrop-blur-md bg-white/80 rounded-2xl shadow-xl border border-white/20 overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
+                  {/* Gradient accent bar */}
+                  <div className="h-1.5 bg-gradient-to-r from-[#118ff3] to-[#0c5798]"></div>
+                  
+                  <div className="p-8 text-center">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-[#118ff3] to-[#0c5798] rounded-full flex items-center justify-center shadow-lg">
+                      <Users className="w-8 h-8 text-white" />
+                    </div>
+                    <h2 className="text-xl font-bold bg-gradient-to-r from-[#118ff3] to-[#0c5798] bg-clip-text text-transparent mb-3">
+                      Join Existing Team
+                    </h2>
+                    <p className="text-gray-600 mb-4">
+                      Join an existing team's coaching staff using an invitation code.
+                    </p>
+                    <ul className="text-sm text-gray-500 space-y-1 text-left max-w-xs mx-auto">
+                      <li>• Get code from head coach</li>
+                      <li>• Join coaching staff</li>
+                      <li>• Access team management</li>
+                      <li>• Collaborate with team</li>
+                    </ul>
                   </div>
-                  <CardTitle className="text-xl">Join Existing Team</CardTitle>
-                </CardHeader>
-                <CardContent className="text-center">
-                  <p className="text-gray-600 mb-4">
-                    Join an existing team's coaching staff using an invitation code.
-                  </p>
-                  <ul className="text-sm text-gray-500 space-y-1">
-                    <li>• Get code from head coach</li>
-                    <li>• Join coaching staff</li>
-                    <li>• Access team management</li>
-                    <li>• Collaborate with team</li>
-                  </ul>
-                </CardContent>
-              </Card>
+                </div>
+              </motion.div>
             </div>
           </div>
         ) : (
@@ -176,7 +198,7 @@ export default function TeamOnboarding({ user, onComplete }) {
           </div>
         )}
 
-        {/* Logout Button - Centered at Bottom */}
+        {/* Logout Button - Only on choice screen */}
         <div className="mt-6 text-center">
           <button
             onClick={handleLogout}

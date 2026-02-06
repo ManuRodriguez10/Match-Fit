@@ -1,29 +1,16 @@
 import React, { useState } from "react";
 import { supabase } from "@/api/supabaseClient";
-import { createPageUrl } from "@/utils";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, LogOut, Users } from "lucide-react";
+import { ArrowLeft, Users } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
 export default function JoinTeamForm({ user, onComplete, onBack }) {
-  const navigate = useNavigate();
   const [joinCode, setJoinCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
-
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      navigate(createPageUrl("LandingPage"));
-    } catch (error) {
-      console.error("Error logging out:", error);
-      toast.error("Failed to log out. Please try again.");
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -155,16 +142,6 @@ export default function JoinTeamForm({ user, onComplete, onBack }) {
           </form>
           </div>
         </motion.div>
-
-        <div className="mt-6 text-center">
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-sm transition-all text-white border-2 border-red-600 bg-red-600 hover:bg-red-700 hover:border-red-700"
-          >
-            <LogOut className="w-4 h-4" />
-            Logout
-          </button>
-        </div>
       </div>
     </div>
   );

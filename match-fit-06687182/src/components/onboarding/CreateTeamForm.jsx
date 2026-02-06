@@ -1,32 +1,20 @@
 import React, { useState } from "react";
 import { supabase } from "@/api/supabaseClient";
-import { createPageUrl } from "@/utils";
-import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Copy, CheckCircle, LogOut } from "lucide-react";
+import { ArrowLeft, Copy, CheckCircle, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
 
 export default function CreateTeamForm({ user, onComplete, onBack }) {
-  const navigate = useNavigate();
   const [teamData, setTeamData] = useState({
     name: "",
     description: ""
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdTeam, setCreatedTeam] = useState(null);
-
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      navigate(createPageUrl("LandingPage"));
-    } catch (error) {
-      console.error("Error logging out:", error);
-    }
-  };
 
   const generateJoinCode = () => {
     const characters = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -92,118 +80,142 @@ export default function CreateTeamForm({ user, onComplete, onBack }) {
 
   if (createdTeam) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[var(--primary-light)] to-blue-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-[#e7f3fe] via-white to-[#e7f3fe] flex items-center justify-center p-4">
         <div className="w-full max-w-md">
-          <Card>
-            <CardHeader className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
-                <CheckCircle className="w-8 h-8 text-green-600" />
-              </div>
-              <CardTitle className="text-2xl">Team Created Successfully!</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="text-center">
-                <p className="text-gray-600 mb-4">
-                  Share this code with your players so they can join <strong>{createdTeam.name}</strong>:
-                </p>
-                <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-6">
-                  <p className="text-4xl font-bold text-[var(--primary-main)] tracking-wider mb-3">
-                    {createdTeam.join_code}
-                  </p>
-                  <Button variant="outline" onClick={copyJoinCode} className="w-full">
-                    <Copy className="w-4 h-4 mr-2" />
-                    Copy Team Code
-                  </Button>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="backdrop-blur-md bg-white/80 rounded-2xl shadow-xl border border-white/20 overflow-hidden"
+          >
+            {/* Gradient accent bar */}
+            <div className="h-1.5 bg-gradient-to-r from-[#118ff3] to-[#0c5798]"></div>
+            
+            <div className="p-8">
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center shadow-lg">
+                  <CheckCircle className="w-8 h-8 text-white" />
                 </div>
-                <p className="text-sm text-gray-500 mt-4">
-                  Players will need this code to join your team. You can find it later in your team settings.
-                </p>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-[#118ff3] to-[#0c5798] bg-clip-text text-transparent mb-2">
+                  Team Created Successfully!
+                </h1>
               </div>
 
-              <Button
-                onClick={onComplete}
-                className="w-full bg-[var(--primary-main)] hover:bg-[var(--primary-dark)]"
-              >
-                Go to Dashboard
-              </Button>
-            </CardContent>
-          </Card>
+              <div className="space-y-6">
+                <div className="text-center">
+                  <p className="text-gray-600 mb-4">
+                    Share this code with your players so they can join <strong>{createdTeam.name}</strong>:
+                  </p>
+                  <div className="bg-gradient-to-br from-gray-50 to-gray-100/50 border-2 border-dashed border-gray-300 rounded-xl p-6">
+                    <p className="text-4xl font-bold bg-gradient-to-r from-[#118ff3] to-[#0c5798] bg-clip-text text-transparent tracking-wider mb-4">
+                      {createdTeam.join_code}
+                    </p>
+                    <Button 
+                      onClick={copyJoinCode} 
+                      className="w-full bg-gradient-to-r from-[#118ff3] to-[#0c5798] hover:from-[#0c5798] hover:to-[#118ff3] text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
+                    >
+                      <Copy className="w-4 h-4 mr-2" />
+                      Copy Team Code
+                    </Button>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-4">
+                    Players will need this code to join your team. You can find it later in your team settings.
+                  </p>
+                </div>
 
-          <div className="mt-6 text-center">
-            <Button
-              variant="ghost"
-              onClick={handleLogout}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
-            </Button>
-          </div>
+                <Button
+                  onClick={onComplete}
+                  className="w-full bg-gradient-to-r from-[#118ff3] to-[#0c5798] hover:from-[#0c5798] hover:to-[#118ff3] text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
+                >
+                  Go to Dashboard
+                </Button>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[var(--primary-light)] to-blue-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#e7f3fe] via-white to-[#e7f3fe] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <Card>
-          <CardHeader>
-            <Button variant="ghost" size="icon" onClick={onBack} className="mb-2">
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-            <CardTitle>Create Your Team</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="backdrop-blur-md bg-white/80 rounded-2xl shadow-xl border border-white/20 overflow-hidden"
+        >
+          {/* Gradient accent bar */}
+          <div className="h-1.5 bg-gradient-to-r from-[#118ff3] to-[#0c5798]"></div>
+          
+          <div className="p-8">
+            {/* Header */}
+            <div className="mb-8">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={onBack} 
+                className="mb-4 hover:bg-blue-50"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+              <div className="flex items-center justify-center mb-4">
+                <div className="w-16 h-16 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center shadow-lg">
+                  <Plus className="w-8 h-8 text-white" />
+                </div>
+              </div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-[#118ff3] to-[#0c5798] bg-clip-text text-transparent text-center">
+                Create Your Team
+              </h1>
+            </div>
+
+            {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="name">Team Name *</Label>
+                <Label htmlFor="name" className="text-gray-700 font-medium">Team Name *</Label>
                 <Input
                   id="name"
                   value={teamData.name}
                   onChange={(e) => setTeamData((prev) => ({ ...prev, name: e.target.value }))}
                   placeholder="e.g., Thunder Hawks"
+                  className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Description (Optional)</Label>
+                <Label htmlFor="description" className="text-gray-700 font-medium">Description (Optional)</Label>
                 <Textarea
                   id="description"
                   value={teamData.description}
                   onChange={(e) => setTeamData((prev) => ({ ...prev, description: e.target.value }))}
                   placeholder="Tell us about your team..."
                   rows={3}
+                  className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
 
-              <div className="flex gap-3">
-                <Button type="button" variant="outline" onClick={onBack} className="flex-1">
+              <div className="flex gap-3 pt-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={onBack} 
+                  className="flex-1 rounded-lg border-gray-200 hover:bg-gray-50"
+                >
                   Back
                 </Button>
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex-1 bg-[var(--primary-main)] hover:bg-[var(--primary-dark)]"
+                  className="flex-1 bg-gradient-to-r from-[#118ff3] to-[#0c5798] hover:from-[#0c5798] hover:to-[#118ff3] text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
                 >
                   {isSubmitting ? "Creating..." : "Create Team"}
                 </Button>
               </div>
             </form>
-          </CardContent>
-        </Card>
-
-        <div className="mt-6 text-center">
-          <Button
-            variant="ghost"
-            onClick={handleLogout}
-            className="text-gray-600 hover:text-gray-900"
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Logout
-          </Button>
-        </div>
+          </div>
+        </motion.div>
       </div>
     </div>
   );
