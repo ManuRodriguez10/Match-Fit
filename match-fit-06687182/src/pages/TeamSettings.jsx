@@ -18,7 +18,7 @@ import { motion } from "framer-motion";
 
 export default function TeamSettingsPage() {
   const location = useLocation();
-  const { currentUser, isLoadingUser } = useUser();
+  const { currentUser, isLoadingUser, loadCurrentUser } = useUser();
   const [team, setTeam] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -196,23 +196,12 @@ export default function TeamSettingsPage() {
     try {
       const teamId = team.id;
 
-      const cleanupResults = await Promise.all([
-        supabase.from("profiles").update({ team_id: null, team_role: null }).eq("team_id", teamId),
-        supabase.from("events").delete().eq("team_id", teamId),
-        supabase.from("lineups").delete().eq("team_id", teamId),
-        supabase.from("coach_invites").delete().eq("team_id", teamId)
-      ]);
+      const { error } = await supabase.rpc('delete_team_and_disassociate_members', {
+        team_id_to_delete: teamId
+      });
+      if (error) throw error;
 
-      const cleanupError = cleanupResults.find((result) => result.error)?.error;
-      if (cleanupError) {
-        throw cleanupError;
-      }
-
-      const { error: deleteTeamError } = await supabase.from('teams').delete().eq('id', teamId);
-      if (deleteTeamError) {
-        throw deleteTeamError;
-      }
-
+      await loadCurrentUser();
       toast.success("Team deleted successfully.");
       navigate(createPageUrl("Dashboard"), { replace: true });
     } catch (error) {

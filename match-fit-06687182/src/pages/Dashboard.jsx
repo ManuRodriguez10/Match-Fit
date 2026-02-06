@@ -2,20 +2,11 @@ import React from "react";
 import { useUser } from "../components/UserContext";
 import CoachDashboard from "../components/dashboard/CoachDashboard";
 import PlayerDashboard from "../components/dashboard/PlayerDashboard";
-import RoleSetup from "../components/onboarding/RoleSetup";
 import TeamOnboarding from "../components/onboarding/TeamOnboarding";
 import PlayerProfileCompletion from "../components/onboarding/PlayerProfileCompletion";
 
 export default function Dashboard() {
   const { currentUser, isLoadingUser, loadCurrentUser } = useUser();
-
-  const handleResetRole = async () => {
-    try {
-      await loadCurrentUser();
-    } catch (error) {
-      console.error("Error resetting role:", error);
-    }
-  };
 
   if (isLoadingUser) {
     return (
@@ -44,17 +35,12 @@ export default function Dashboard() {
     );
   }
 
-  // Stage 1: Check if user has selected their role
-  if (!currentUser.team_role) {
-    return <RoleSetup user={currentUser} onComplete={loadCurrentUser} />;
-  }
-
-  // Stage 2: Check if user has joined/created a team
+  // Stage 1: Check if user has joined/created a team
   if (!currentUser.team_id) {
-    return <TeamOnboarding user={currentUser} onComplete={loadCurrentUser} onBackToRoleSelection={handleResetRole} />;
+    return <TeamOnboarding user={currentUser} onComplete={loadCurrentUser} />;
   }
 
-  // Stage 3: For players, check if they've completed their full profile
+  // Stage 2: For players, check if they've completed their full profile
   if (currentUser.team_role === "player" && (!currentUser.position || !currentUser.jersey_number)) {
     return <PlayerProfileCompletion user={currentUser} onComplete={loadCurrentUser} />;
   }

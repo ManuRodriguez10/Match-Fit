@@ -1,6 +1,6 @@
 
 import React, { useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { supabase } from "@/api/supabaseClient";
 import {
@@ -18,8 +18,11 @@ import { Button } from "@/components/ui/button";
 import { UserProvider, useUser } from "@/components/UserContext";
 import { toast } from "sonner";
 
+const TEAM_DEPENDENT_PAGES = ["Events", "Roster", "Lineups", "TeamSettings", "Profile", "PlayerRoster", "CoachProfile"];
+
 function LayoutContent({ children, currentPageName }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { currentUser, isLoadingUser } = useUser();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
@@ -34,6 +37,13 @@ function LayoutContent({ children, currentPageName }) {
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    const userTeamId = currentUser?.user_metadata?.team_id || currentUser?.team_id;
+    if (!isLoadingUser && currentUser && !userTeamId && TEAM_DEPENDENT_PAGES.includes(currentPageName)) {
+      navigate(createPageUrl("Dashboard"), { replace: true });
+    }
+  }, [isLoadingUser, currentUser, currentPageName, navigate]);
 
   const handleLogout = async () => {
     try {
@@ -96,7 +106,7 @@ function LayoutContent({ children, currentPageName }) {
     "User";
   const resolvedInitial = resolvedName.trim().charAt(0)?.toUpperCase() || "U";
 
-  const isOnboarding = currentPageName === "Dashboard" && currentUser && (!userTeamRole || !userTeamId);
+  const isOnboarding = currentPageName === "Dashboard" && currentUser && !userTeamId;
 
   // If landing page or onboarding, render without layout
   if (authFreePages.includes(currentPageName) || isOnboarding) {

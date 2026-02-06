@@ -10,7 +10,7 @@ import CreateTeamForm from "./CreateTeamForm";
 import JoinTeamForm from "./JoinTeamForm";
 import AcceptCoachCodeForm from "./AcceptCoachCodeForm";
 
-export default function TeamOnboarding({ user, onComplete, onBackToRoleSelection }) {
+export default function TeamOnboarding({ user, onComplete }) {
   const [view, setView] = useState("choice"); // "choice", "create", "join", "acceptCoachCode"
   const navigate = useNavigate();
   
