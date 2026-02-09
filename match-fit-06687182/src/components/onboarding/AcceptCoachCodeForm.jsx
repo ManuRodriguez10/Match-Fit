@@ -91,9 +91,20 @@ export default function AcceptCoachCodeForm({ user, onComplete, onBack }) {
         targetTeamId = teams[0].id;
       }
 
+      // Update profile: set team_id and coach_role
+      const updateData = { team_id: targetTeamId };
+      
+      // If joining via coach invite, set as assistant_coach by default
+      // (When creating a team, the creator becomes head_coach - handled in CreateTeamForm)
+      if (coachInviteId) {
+        // Joining someone else's team via coach invite = assistant coach
+        updateData.coach_role = "assistant_coach";
+      }
+      // If joining via player code (fallback), don't change coach_role (player joining as player)
+      
       const { error: profileError } = await supabase
         .from("profiles")
-        .update({ team_id: targetTeamId })
+        .update(updateData)
         .eq("id", authUser.id);
 
       if (profileError) {

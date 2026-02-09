@@ -1,14 +1,74 @@
-import React from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useUser } from "../components/UserContext";
+import { supabase } from "../api/supabaseClient";
 import CoachDashboard from "../components/dashboard/CoachDashboard";
 import PlayerDashboard from "../components/dashboard/PlayerDashboard";
 import TeamOnboarding from "../components/onboarding/TeamOnboarding";
 import PlayerProfileCompletion from "../components/onboarding/PlayerProfileCompletion";
+import CoachProfileCompletion from "../components/onboarding/CoachProfileCompletion";
 
 export default function Dashboard() {
   const { currentUser, isLoadingUser, loadCurrentUser } = useUser();
+  const [isValidatingTeam, setIsValidatingTeam] = useState(false);
+  const lastValidatedTeamIdRef = useRef(null);
+  const isValidatingRef = useRef(false);
 
-  if (isLoadingUser) {
+  // Validate that team_id actually exists in the database
+  // Only validate once per team_id change, not on every user update
+  useEffect(() => {
+    const validateTeam = async () => {
+      // Skip if no team_id, still loading, already validating, or already validated this team_id
+      if (
+        !currentUser?.team_id || 
+        isLoadingUser || 
+        isValidatingRef.current ||
+        lastValidatedTeamIdRef.current === currentUser.team_id
+      ) {
+        return;
+      }
+
+      isValidatingRef.current = true;
+      setIsValidatingTeam(true);
+      
+      try {
+        const { data, error } = await supabase
+          .from("teams")
+          .select("id")
+          .eq("id", currentUser.team_id)
+          .maybeSingle();
+
+        // Mark this team_id as validated
+        lastValidatedTeamIdRef.current = currentUser.team_id;
+
+        // If team doesn't exist, clear team_id from profile
+        if (error || !data) {
+          console.warn("Team not found, clearing team_id from profile");
+          const { error: updateError } = await supabase
+            .from("profiles")
+            .update({ team_id: null })
+            .eq("id", currentUser.id);
+
+          if (!updateError) {
+            // Reset validation ref so we can validate again after reload
+            lastValidatedTeamIdRef.current = null;
+            // Reload user to reflect the cleared team_id (don't await to avoid blocking)
+            loadCurrentUser();
+          }
+        }
+      } catch (error) {
+        console.error("Error validating team:", error);
+        // Reset ref on error so we can retry
+        lastValidatedTeamIdRef.current = null;
+      } finally {
+        isValidatingRef.current = false;
+        setIsValidatingTeam(false);
+      }
+    };
+
+    validateTeam();
+  }, [currentUser?.team_id, isLoadingUser]); // Removed loadCurrentUser, currentUser?.id, and isValidatingTeam
+
+  if (isLoadingUser || isValidatingTeam) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-pulse space-y-6">
@@ -43,6 +103,11 @@ export default function Dashboard() {
   // Stage 2: For players, check if they've completed their full profile
   if (currentUser.team_role === "player" && (!currentUser.position || !currentUser.jersey_number)) {
     return <PlayerProfileCompletion user={currentUser} onComplete={loadCurrentUser} />;
+  }
+
+  // Stage 3: For coaches, check if they've completed their full profile
+  if (currentUser.team_role === "coach" && (!currentUser.first_name || !currentUser.last_name || !currentUser.years_experience || !currentUser.phone)) {
+    return <CoachProfileCompletion user={currentUser} onComplete={loadCurrentUser} />;
   }
 
   // All onboarding complete - show appropriate dashboard
