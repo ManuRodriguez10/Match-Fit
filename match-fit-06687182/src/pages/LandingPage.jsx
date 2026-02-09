@@ -56,18 +56,18 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#e7f3fe] via-white to-[#e7f3fe] relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-[#e7f3fe] via-white to-[#e7f3fe] relative overflow-x-hidden">
       {/* Dynamic Backgrounds */}
       <AnimatedBackground />
       <GradientOrbs />
       <FloatingElements />
 
       {/* Hero Section */}
-      <div className="container mx-auto px-4 py-12 lg:py-20 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center min-h-[80vh]">
+      <div className="container mx-auto px-4 py-8 lg:py-20 relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start lg:items-center min-h-0 lg:min-h-[80vh]">
           {/* Left Side - Marketing Content */}
           <motion.div
-            className="space-y-8 text-center lg:text-left"
+            className="space-y-6 md:space-y-8 text-center lg:text-left"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, amount: 0.2 }}
@@ -159,18 +159,6 @@ export default function LandingPage() {
               </Button>
             </div>
 
-            {/* Trust indicators */}
-            <div className="flex items-center gap-4 justify-center lg:justify-start pt-4">
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <CheckCircle className="w-4 h-4 text-emerald-500" />
-                Free to start
-              </div>
-              <div className="w-1 h-1 rounded-full bg-gray-300" />
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <CheckCircle className="w-4 h-4 text-emerald-500" />
-                No credit card required
-              </div>
-            </div>
           </motion.div>
 
           {/* Right Side - Dynamic Visual */}
