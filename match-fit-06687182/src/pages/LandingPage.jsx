@@ -17,11 +17,9 @@ const fadeInUp = {
 
 export default function LandingPage() {
   const navigate = useNavigate()
-  const [isLoaded, setIsLoaded] = useState(false)
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
 
   useEffect(() => {
-    setIsLoaded(true)
     checkAuthentication()
   }, [])
 
@@ -68,10 +66,13 @@ export default function LandingPage() {
       <div className="container mx-auto px-4 py-12 lg:py-20 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center min-h-[80vh]">
           {/* Left Side - Marketing Content */}
-          <div
-            className={`space-y-8 text-center lg:text-left transition-all duration-1000 ${
-              isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-            }`}
+          <motion.div
+            className="space-y-8 text-center lg:text-left"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+            variants={fadeInUp}
+            transition={{ duration: 0.5 }}
           >
             {/* Logo with glow effect */}
             <div className="flex justify-center lg:justify-start">
@@ -102,7 +103,7 @@ export default function LandingPage() {
               </p>
             </div>
 
-            {/* Features List with animations */}
+            {/* Features List */}
             <div className="space-y-4">
               {[
                 {
@@ -110,29 +111,23 @@ export default function LandingPage() {
                   text: "Schedule events and track attendance",
                   color: "bg-[#118ff3]/10",
                   iconColor: "text-[#118ff3]",
-                  delay: "100ms",
                 },
                 {
                   icon: Users,
                   text: "Manage your roster effortlessly",
                   color: "bg-emerald-100",
                   iconColor: "text-emerald-600",
-                  delay: "200ms",
                 },
                 {
                   icon: Trophy,
                   text: "Build and publish game lineups",
                   color: "bg-amber-100",
                   iconColor: "text-amber-600",
-                  delay: "300ms",
                 },
               ].map((feature, index) => (
                 <div
                   key={index}
-                  className={`flex items-center gap-3 justify-center lg:justify-start transition-all duration-700 ${
-                    isLoaded ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-10"
-                  }`}
-                  style={{ transitionDelay: feature.delay }}
+                  className="flex items-center gap-3 justify-center lg:justify-start"
                 >
                   <div
                     className={`w-12 h-12 rounded-xl ${feature.color} flex items-center justify-center flex-shrink-0 shadow-sm`}
@@ -176,13 +171,16 @@ export default function LandingPage() {
                 No credit card required
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Right Side - Dynamic Visual */}
-          <div
-            className={`relative flex justify-center items-center transition-all duration-1000 delay-300 ${
-              isLoaded ? "opacity-100 scale-100" : "opacity-0 scale-95"
-            }`}
+          <motion.div
+            className="relative flex justify-center items-center"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+            variants={fadeInUp}
+            transition={{ duration: 0.5, delay: 0.15 }}
           >
             {/* Animated rings */}
             <div className="absolute inset-0 flex items-center justify-center">
@@ -265,7 +263,7 @@ export default function LandingPage() {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
 
