@@ -125,12 +125,9 @@ export default function RosterMemberDetails({ member, currentUser, onClose, onPl
 
     setIsRemoving(true);
     try {
-      // Remove coach by setting team_id and team_role to null
-      const { error } = await supabase
-        .from("profiles")
-        .update({ team_id: null, team_role: null })
-        .eq("id", member.id)
-        .eq("team_id", currentUser.team_id); // Ensure they're on the same team
+      const { error } = await safeRpc("remove_coach_from_team", {
+        coach_profile_id: member.id
+      });
 
       if (error) {
         console.error("Error removing coach:", error);

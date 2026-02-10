@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Copy, Users, Save, Trash2, Key, ArrowLeft, Info, UserPlus, AlertTriangle, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
@@ -29,6 +30,8 @@ export default function TeamSettingsPage() {
   });
   const [generatedCode, setGeneratedCode] = useState(null);
   const [generatedCodeExpiry, setGeneratedCodeExpiry] = useState(null);
+  const [generatedCodeRole, setGeneratedCodeRole] = useState(null); // 'assistant_coach' | 'head_coach'
+  const [coachInviteRole, setCoachInviteRole] = useState("assistant_coach"); // role to assign when generating
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
   const [isCopyingJoinCode, setIsCopyingJoinCode] = useState(false);
   const [isCopyingCoachCode, setIsCopyingCoachCode] = useState(false);
@@ -46,6 +49,7 @@ export default function TeamSettingsPage() {
     return () => {
       setGeneratedCode(null);
       setGeneratedCodeExpiry(null);
+      setGeneratedCodeRole(null);
     };
   }, [currentUser, location.pathname]);
 
@@ -102,14 +106,17 @@ export default function TeamSettingsPage() {
       if (data) {
         setGeneratedCode(data.code);
         setGeneratedCodeExpiry(data.expires_at);
+        setGeneratedCodeRole(data.invited_role || "assistant_coach");
       } else {
         setGeneratedCode(null);
         setGeneratedCodeExpiry(null);
+        setGeneratedCodeRole(null);
       }
     } catch (error) {
       console.warn("Coach invite lookup failed:", error.message);
       setGeneratedCode(null);
       setGeneratedCodeExpiry(null);
+      setGeneratedCodeRole(null);
     }
   };
 
@@ -254,7 +261,8 @@ export default function TeamSettingsPage() {
           code,
           created_by: currentUser.id,
           expires_at: expiresAt.toISOString(),
-          used: false
+          used: false,
+          invited_role: coachInviteRole
         })
         .select();
 
@@ -269,6 +277,7 @@ export default function TeamSettingsPage() {
 
       setGeneratedCode(invite.code);
       setGeneratedCodeExpiry(invite.expires_at);
+      setGeneratedCodeRole(invite.invited_role || "assistant_coach");
       toast.success("Coach invitation code generated!", { position: "top-center", duration: 2500 });
     } catch (error) {
       console.error("Error generating coach code:", error);
@@ -582,6 +591,24 @@ export default function TeamSettingsPage() {
                         Generate a one-time code to invite another coach to join your coaching staff.
                       </p>
                     </div>
+
+                    <div className="space-y-3">
+                      <Label className="text-slate-700 font-medium">Invite as</Label>
+                      <RadioGroup
+                        value={coachInviteRole}
+                        onValueChange={setCoachInviteRole}
+                        className="flex flex-wrap gap-4"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="assistant_coach" id="invite-assistant" />
+                          <Label htmlFor="invite-assistant" className="font-normal cursor-pointer">Assistant Coach</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="head_coach" id="invite-head" />
+                          <Label htmlFor="invite-head" className="font-normal cursor-pointer">Head Coach (Co-Head)</Label>
+                        </div>
+                      </RadioGroup>
+                    </div>
                     
                     {!generatedCode ? (
                         <motion.div
@@ -614,6 +641,11 @@ export default function TeamSettingsPage() {
                             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                               <div className="text-center sm:text-left">
                                 <p className="text-sm text-emerald-600 font-medium mb-1">Coach Invitation Code</p>
+                                {generatedCodeRole && (
+                                  <p className="text-xs text-slate-600 mb-1">
+                                    Invited as: <span className="font-medium capitalize">{generatedCodeRole.replace("_", " ")}</span>
+                                  </p>
+                                )}
                                 <p className="text-2xl md:text-3xl font-bold text-emerald-700 tracking-wider break-all">
                                   {generatedCode}
                                 </p>
