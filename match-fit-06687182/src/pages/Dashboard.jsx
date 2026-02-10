@@ -100,13 +100,13 @@ export default function Dashboard() {
     return <TeamOnboarding user={currentUser} onComplete={loadCurrentUser} />;
   }
 
-  // Stage 2: For players, check if they've completed their full profile
-  if (currentUser.team_role === "player" && (!currentUser.position || !currentUser.jersey_number)) {
+  // Stage 2: For players, check if they've completed their profile for this team
+  if (currentUser.team_role === "player" && currentUser.profile_completed_for_team_id !== currentUser.team_id) {
     return <PlayerProfileCompletion user={currentUser} onComplete={loadCurrentUser} />;
   }
 
-  // Stage 3: For coaches, check if they've completed their full profile
-  if (currentUser.team_role === "coach" && (!currentUser.first_name || !currentUser.last_name || !currentUser.years_experience || !currentUser.phone)) {
+  // Stage 3: For coaches, check if they've completed their profile for this team
+  if (currentUser.team_role === "coach" && currentUser.profile_completed_for_team_id !== currentUser.team_id) {
     return <CoachProfileCompletion user={currentUser} onComplete={loadCurrentUser} />;
   }
 

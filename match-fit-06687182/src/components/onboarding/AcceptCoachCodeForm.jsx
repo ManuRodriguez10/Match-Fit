@@ -91,13 +91,14 @@ export default function AcceptCoachCodeForm({ user, onComplete, onBack }) {
         targetTeamId = teams[0].id;
       }
 
-      // Update profile: set team_id and coach_role
-      const updateData = { team_id: targetTeamId };
+      // Update profile: set team_id, team_role, and coach_role.
+      // Set profile_completed_for_team_id to null so they must complete profile for this new team.
+      const updateData = { team_id: targetTeamId, profile_completed_for_team_id: null };
       
-      // If joining via coach invite, set as assistant_coach by default
+      // If joining via coach invite, set as assistant coach
       // (When creating a team, the creator becomes head_coach - handled in CreateTeamForm)
       if (coachInviteId) {
-        // Joining someone else's team via coach invite = assistant coach
+        updateData.team_role = "coach";
         updateData.coach_role = "assistant_coach";
       }
       // If joining via player code (fallback), don't change coach_role (player joining as player)

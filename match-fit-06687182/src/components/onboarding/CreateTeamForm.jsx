@@ -56,12 +56,15 @@ export default function CreateTeamForm({ user, onComplete, onBack }) {
         throw teamError;
       }
 
-      // Update profile: set team_id and ensure creator is head coach
+      // Update profile: set team_id, team_role, and ensure creator is head coach.
+      // Set profile_completed_for_team_id to null so they must complete profile for this new team.
       const { error: profileError } = await supabase
         .from("profiles")
         .update({ 
           team_id: team.id,
-          coach_role: "head_coach" // Creator is always head coach
+          team_role: "coach",
+          coach_role: "head_coach", // Creator is always head coach
+          profile_completed_for_team_id: null
         })
         .eq("id", authUser.id);
 

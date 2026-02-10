@@ -184,7 +184,10 @@ export default function TeamSettingsPage() {
       `This action is PERMANENT and will delete all team data including events, lineups, and disassociate all members.\n\nType "${team.name}" to confirm deletion:`
     );
     
-    if (confirmText !== team.name) {
+    const normalizedInput = confirmText?.trim();
+    const normalizedName = team.name?.trim();
+
+    if (!normalizedInput || normalizedInput !== normalizedName) {
       if (confirmText !== null) {
         toast.error("Team name did not match. Deletion cancelled.");
       }

@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
@@ -43,17 +42,6 @@ const parsePhoneNumber = (phone) => {
   
   // Default if no match found
   return { countryCode: "+1", localNumber: phone };
-};
-
-const getCoachRoleDisplay = (role) => {
-  switch (role) {
-    case "head_coach":
-      return "Head Coach";
-    case "assistant_coach":
-      return "Assistant Coach";
-    default:
-      return "Coach";
-  }
 };
 
 export default function CoachProfileCompletion({ user, onComplete }) {
@@ -176,7 +164,8 @@ export default function CoachProfileCompletion({ user, onComplete }) {
         first_name: coachData.first_name,
         last_name: coachData.last_name,
         years_experience: parseInt(coachData.years_experience),
-        phone: fullPhoneNumber
+        phone: fullPhoneNumber,
+        profile_completed_for_team_id: user.team_id
       };
 
       if (coachData.first_name && coachData.last_name) {
@@ -287,17 +276,6 @@ export default function CoachProfileCompletion({ user, onComplete }) {
                     ) : (
                       <p className="text-xs text-gray-500">Enter your years of coaching experience</p>
                     )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-gray-700 font-medium">Coach Role</Label>
-                    <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700">
-                      <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4 text-gray-500" />
-                        <span className="font-medium">{getCoachRoleDisplay(user.coach_role)}</span>
-                      </div>
-                    </div>
-                    <p className="text-xs text-gray-500">Your role is set by your team's head coach</p>
                   </div>
 
                   <div className="space-y-2 md:col-span-2">

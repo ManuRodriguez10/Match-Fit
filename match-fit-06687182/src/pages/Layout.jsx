@@ -40,7 +40,15 @@ function LayoutContent({ children, currentPageName }) {
 
   useEffect(() => {
     const userTeamId = currentUser?.user_metadata?.team_id || currentUser?.team_id;
-    if (!isLoadingUser && currentUser && !userTeamId && TEAM_DEPENDENT_PAGES.includes(currentPageName)) {
+    const profileCompletedForTeam = currentUser?.profile_completed_for_team_id;
+    const profileIncomplete = userTeamId && profileCompletedForTeam !== userTeamId;
+
+    if (
+      !isLoadingUser &&
+      currentUser &&
+      TEAM_DEPENDENT_PAGES.includes(currentPageName) &&
+      (!userTeamId || profileIncomplete)
+    ) {
       navigate(createPageUrl("Dashboard"), { replace: true });
     }
   }, [isLoadingUser, currentUser, currentPageName, navigate]);
@@ -98,6 +106,11 @@ function LayoutContent({ children, currentPageName }) {
   // Check if user is in onboarding state (only after user is loaded)
   const userTeamRole = currentUser?.user_metadata?.team_role || currentUser?.team_role;
   const userTeamId = currentUser?.user_metadata?.team_id || currentUser?.team_id;
+
+  const isProfileIncomplete =
+    userTeamId &&
+    userTeamRole &&
+    currentUser?.profile_completed_for_team_id !== userTeamId;
   const resolvedName =
     currentUser?.full_name ||
     [currentUser?.first_name, currentUser?.last_name].filter(Boolean).join(" ") ||
@@ -106,7 +119,10 @@ function LayoutContent({ children, currentPageName }) {
     "User";
   const resolvedInitial = resolvedName.trim().charAt(0)?.toUpperCase() || "U";
 
-  const isOnboarding = currentPageName === "Dashboard" && currentUser && !userTeamId;
+  const isOnboarding =
+    currentPageName === "Dashboard" &&
+    currentUser &&
+    (!userTeamId || isProfileIncomplete);
 
   // If landing page or onboarding, render without layout
   if (authFreePages.includes(currentPageName) || isOnboarding) {

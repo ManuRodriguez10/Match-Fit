@@ -13,7 +13,14 @@ export default function TeamOnboarding({ user, onComplete }) {
   const [view, setView] = useState("choice"); // "choice", "create", "join", "acceptCoachCode"
   const navigate = useNavigate();
   
-  const isCoach = user.team_role === "coach";
+  // Treat user as a coach if their team_role is explicitly 'coach',
+  // or if they have a coach_role (head or assistant). This makes the
+  // onboarding robust for older accounts where team_role may not be set
+  // but coach_role is.
+  const isCoach =
+    user?.team_role === "coach" ||
+    user?.coach_role === "head_coach" ||
+    user?.coach_role === "assistant_coach";
 
   const handleLogout = async () => {
     try {

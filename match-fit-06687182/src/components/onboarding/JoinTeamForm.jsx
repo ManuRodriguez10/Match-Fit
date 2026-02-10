@@ -46,7 +46,7 @@ export default function JoinTeamForm({ user, onComplete, onBack }) {
 
       const { error: profileError } = await supabase
         .from("profiles")
-        .update({ team_id: team.id })
+        .update({ team_id: team.id, profile_completed_for_team_id: null })
         .eq("id", authUser.id);
 
       if (profileError) {

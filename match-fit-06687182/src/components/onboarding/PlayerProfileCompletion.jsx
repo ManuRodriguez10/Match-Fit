@@ -359,7 +359,8 @@ export default function PlayerProfileCompletion({ user, onComplete }) {
         height: heightString,
         weight: cleanWeight,
         nationality: playerData.nationality,
-        phone: fullPhoneNumber
+        phone: fullPhoneNumber,
+        profile_completed_for_team_id: user.team_id
       };
 
       if (playerData.first_name && playerData.last_name) {
