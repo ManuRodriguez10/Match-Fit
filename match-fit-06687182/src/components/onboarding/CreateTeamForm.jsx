@@ -4,8 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Copy, CheckCircle, Plus } from "lucide-react";
-import { toast } from "sonner";
+import { ArrowLeft, Plus } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function CreateTeamForm({ user, onComplete, onBack }) {
@@ -14,7 +13,6 @@ export default function CreateTeamForm({ user, onComplete, onBack }) {
     description: ""
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [createdTeam, setCreatedTeam] = useState(null);
 
   const generateJoinCode = () => {
     const characters = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -72,77 +70,17 @@ export default function CreateTeamForm({ user, onComplete, onBack }) {
         throw profileError;
       }
 
-      setCreatedTeam(team);
+      // Team created and profile associated. Let the parent (Dashboard)
+      // decide the next step (typically coach profile completion) by
+      // reloading the current user.
+      await onComplete();
+      setIsSubmitting(false);
     } catch (error) {
       console.error("Error creating team:", error);
       alert("There was an error creating your team. Please try again.");
       setIsSubmitting(false);
     }
   };
-
-  const copyJoinCode = () => {
-    navigator.clipboard.writeText(createdTeam.join_code);
-    toast.success("Team code copied to clipboard!");
-  };
-
-  if (createdTeam) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-[#e7f3fe] via-white to-[#e7f3fe] flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            className="backdrop-blur-md bg-white/80 rounded-2xl shadow-xl border border-white/20 overflow-hidden"
-          >
-            {/* Gradient accent bar */}
-            <div className="h-1.5 bg-gradient-to-r from-[#118ff3] to-[#0c5798]"></div>
-            
-            <div className="p-8">
-              <div className="text-center mb-6">
-                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center shadow-lg">
-                  <CheckCircle className="w-8 h-8 text-white" />
-                </div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-[#118ff3] to-[#0c5798] bg-clip-text text-transparent mb-2">
-                  Team Created Successfully!
-                </h1>
-              </div>
-
-              <div className="space-y-6">
-                <div className="text-center">
-                  <p className="text-gray-600 mb-4">
-                    Share this code with your players so they can join <strong>{createdTeam.name}</strong>:
-                  </p>
-                  <div className="bg-gradient-to-br from-gray-50 to-gray-100/50 border-2 border-dashed border-gray-300 rounded-xl p-6">
-                    <p className="text-4xl font-bold bg-gradient-to-r from-[#118ff3] to-[#0c5798] bg-clip-text text-transparent tracking-wider mb-4">
-                      {createdTeam.join_code}
-                    </p>
-                    <Button 
-                      onClick={copyJoinCode} 
-                      className="w-full bg-gradient-to-r from-[#118ff3] to-[#0c5798] hover:from-[#0c5798] hover:to-[#118ff3] text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
-                    >
-                      <Copy className="w-4 h-4 mr-2" />
-                      Copy Team Code
-                    </Button>
-                  </div>
-                  <p className="text-sm text-gray-500 mt-4">
-                    Players will need this code to join your team. You can find it later in your team settings.
-                  </p>
-                </div>
-
-                <Button
-                  onClick={onComplete}
-                  className="w-full bg-gradient-to-r from-[#118ff3] to-[#0c5798] hover:from-[#0c5798] hover:to-[#118ff3] text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
-                >
-                  Go to Dashboard
-                </Button>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#e7f3fe] via-white to-[#e7f3fe] flex items-center justify-center p-4">

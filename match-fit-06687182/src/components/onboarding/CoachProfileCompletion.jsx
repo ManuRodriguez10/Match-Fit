@@ -4,8 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { Copy, LogOut } from "lucide-react";
+import { createPageUrl } from "@/utils";
 
 const COUNTRY_CODES = [
   { code: "+1", country: "US/Canada" },
@@ -55,6 +64,8 @@ export default function CoachProfileCompletion({ user, onComplete }) {
     local_phone_number: initialLocalNumber
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [codeDialogOpen, setCodeDialogOpen] = useState(false);
+  const [teamCode, setTeamCode] = useState(null);
   
   // Error states
   const [firstNameError, setFirstNameError] = useState("");
@@ -196,6 +207,36 @@ export default function CoachProfileCompletion({ user, onComplete }) {
 
   const hasErrors = firstNameError || lastNameError || yearsExperienceError || phoneError;
 
+  const fetchTeamCode = async () => {
+    if (!user?.team_id) return;
+    const { data } = await supabase
+      .from("teams")
+      .select("join_code, name")
+      .eq("id", user.team_id)
+      .single();
+    setTeamCode(data);
+  };
+
+  const handleCopyCode = async () => {
+    if (!teamCode?.join_code) return;
+    try {
+      await navigator.clipboard.writeText(teamCode.join_code);
+      toast.success("Team code copied to clipboard!");
+    } catch {
+      toast.error("Failed to copy code");
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      window.location.href = createPageUrl("Login");
+    } catch (error) {
+      console.error("Error logging out:", error);
+      toast.error("Failed to logout. Please try again.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#e7f3fe] via-white to-[#e7f3fe] flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
@@ -315,6 +356,56 @@ export default function CoachProfileCompletion({ user, onComplete }) {
                 </div>
 
                 <div className="flex gap-3 pt-6">
+                  <Dialog open={codeDialogOpen} onOpenChange={(open) => {
+                    setCodeDialogOpen(open);
+                    if (open) fetchTeamCode();
+                  }}>
+                    <DialogTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="flex-1 rounded-lg border-gray-200 hover:bg-gray-50"
+                      >
+                        View Team Code
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden rounded-2xl border border-white/20 shadow-xl backdrop-blur-md bg-white/95">
+                      <div className="h-1.5 bg-gradient-to-r from-[#118ff3] to-[#0c5798]" />
+                      <div className="p-6 pt-4 pr-12 space-y-6">
+                        <DialogHeader>
+                          <DialogTitle className="text-xl font-bold bg-gradient-to-r from-[#118ff3] to-[#0c5798] bg-clip-text text-transparent">
+                            Your Team Join Code
+                          </DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          {teamCode ? (
+                            <>
+                              <p className="text-sm text-gray-600">
+                                Share this code with your players so they can join <strong>{teamCode.name}</strong>:
+                              </p>
+                              <div className="bg-[#e7f3fe] rounded-xl p-4 md:p-6">
+                                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                  <p className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-[#118ff3] to-[#0c5798] bg-clip-text text-transparent tracking-wider break-all">
+                                    {teamCode.join_code}
+                                  </p>
+                                  <Button
+                                    variant="outline"
+                                    onClick={handleCopyCode}
+                                    className="w-full sm:w-auto flex-shrink-0 bg-white/80 backdrop-blur-xl border border-slate-200/50 text-slate-700 hover:bg-white hover:border-slate-300 rounded-xl shadow-lg"
+                                  >
+                                    <Copy className="w-4 h-4 mr-2" />
+                                    Copy Code
+                                  </Button>
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <p className="text-sm text-gray-500">Loading...</p>
+                          )}
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                   <Button
                     type="submit"
                     className="flex-1 bg-gradient-to-r from-[#118ff3] to-[#0c5798] hover:from-[#0c5798] hover:to-[#118ff3] text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 px-4 py-3 h-10 text-sm"
@@ -327,6 +418,17 @@ export default function CoachProfileCompletion({ user, onComplete }) {
             </div>
           </div>
         </motion.div>
+
+        <div className="mt-6 text-center">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-sm transition-all text-white border-2 border-red-600 bg-red-600 hover:bg-red-700 hover:border-red-700 mx-auto"
+          >
+            <LogOut className="w-4 h-4" />
+            Logout
+          </button>
+        </div>
       </div>
     </div>
   );
