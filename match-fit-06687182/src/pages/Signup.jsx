@@ -22,7 +22,6 @@ export default function Signup() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -48,7 +47,6 @@ export default function Signup() {
     }
 
     setError("");
-    setSuccessMessage("");
     setIsSubmitting(true);
 
     try {
@@ -82,16 +80,11 @@ export default function Signup() {
         }
       }
 
-      if (data?.session) {
-        navigate(createPageUrl("Dashboard"));
-      } else {
-        setSuccessMessage("Please check your email to confirm your account before logging in.");
-        setFormState((prev) => ({
-          ...prev,
-          password: "",
-          confirmPassword: ""
-        }));
-      }
+      // Sign out so user must log in explicitly (even when email confirmation is off)
+      await supabase.auth.signOut();
+      navigate(createPageUrl("Login"), {
+        state: { message: "Account created! Please log in with your new account." }
+      });
     } catch (err) {
       setError(err.message || "Unable to create account. Please try again.");
     } finally {
@@ -226,12 +219,6 @@ export default function Signup() {
                 {error}
               </div>
             )}
-            {!error && successMessage && (
-              <div className="rounded-md bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-800">
-                {successMessage}
-              </div>
-            )}
-
             <Button
               type="submit"
               disabled={isSubmitting}

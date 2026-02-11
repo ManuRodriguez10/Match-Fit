@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createPageUrl } from "@/utils";
@@ -14,6 +14,8 @@ const LOGO_ICON =
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const successMessage = location.state?.message;
   const [formState, setFormState] = useState({
     email: "",
     password: "",
@@ -120,6 +122,11 @@ export default function Login() {
               />
             </div>
 
+            {successMessage && (
+              <div className="rounded-md bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-800">
+                {successMessage}
+              </div>
+            )}
             {error && (
               <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
                 {error}
