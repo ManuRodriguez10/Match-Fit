@@ -13,8 +13,10 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { Copy, LogOut } from "lucide-react";
-import { createPageUrl } from "@/utils";
+import { Copy, Calendar, Sparkles } from "lucide-react";
+import { format } from "date-fns";
+import DashboardBackground from "@/components/dashboard/DashboardBackground";
+import DashboardNav from "@/components/dashboard/DashboardNav";
 
 const COUNTRY_CODES = [
   { code: "+1", country: "US/Canada" },
@@ -66,7 +68,8 @@ export default function CoachProfileCompletion({ user, onComplete }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [codeDialogOpen, setCodeDialogOpen] = useState(false);
   const [teamCode, setTeamCode] = useState(null);
-  
+  const [currentDate] = useState(() => new Date());
+
   // Error states
   const [firstNameError, setFirstNameError] = useState("");
   const [lastNameError, setLastNameError] = useState("");
@@ -227,56 +230,59 @@ export default function CoachProfileCompletion({ user, onComplete }) {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      window.location.href = createPageUrl("Login");
-    } catch (error) {
-      console.error("Error logging out:", error);
-      toast.error("Failed to logout. Please try again.");
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#e7f3fe] via-white to-[#e7f3fe] flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl">
+    <div className="min-h-screen bg-gradient-to-br from-[#e7f3fe] via-white to-[#e7f3fe] relative overflow-hidden">
+      <DashboardBackground />
+      <DashboardNav user={user} />
+
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 space-y-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="text-center mb-8"
+          className="flex flex-col sm:flex-row sm:items-end justify-between gap-6"
         >
-          <div className="flex justify-center mb-4">
-            <img src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68c332f7b5426ee106687182/32285dc04_MatchFitLogo.png" alt="MatchFit Logo" className="h-12 w-auto object-contain" />
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <p className="text-slate-600 font-medium text-lg">Setup</p>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#118ff3]/10 border border-[#118ff3]/20 text-[#0c5798] text-sm font-medium">
+                <Sparkles className="w-3.5 h-3.5" />
+                Coach
+              </span>
+            </div>
+            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
+              <span className="bg-gradient-to-r from-[#118ff3] to-[#0c5798] bg-clip-text text-transparent">
+                Complete Your Profile
+              </span>
+            </h1>
+            <p className="text-slate-600 mt-2 text-lg">
+              Now that you've joined a team, let's finish setting up your coach profile.
+            </p>
           </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-[#118ff3] to-[#0c5798] bg-clip-text text-transparent mb-2">
-            Complete Your Coach Profile
-          </h1>
-          <p className="text-gray-600">
-            Now that you've joined a team, let's finish setting up your coach profile.
-          </p>
+          <div className="flex items-center gap-2 text-sm text-slate-500 bg-white/60 backdrop-blur-sm px-4 py-2 rounded-xl border border-slate-200/60">
+            <Calendar className="w-4 h-4 text-[#118ff3]" />
+            <span className="font-medium">{format(currentDate, "EEEE, MMMM d, yyyy")}</span>
+          </div>
         </motion.div>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
+          transition={{ delay: 0.1 }}
+          className="max-w-2xl"
         >
-          <div className="backdrop-blur-md bg-white/80 rounded-2xl shadow-xl border border-white/20 overflow-hidden">
-            {/* Gradient accent bar */}
-            <div className="h-1.5 bg-gradient-to-r from-[#118ff3] to-[#0c5798]"></div>
-            
-            <div className="p-8">
+          <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-slate-200/50 shadow-lg shadow-slate-900/5 overflow-hidden hover:shadow-xl hover:shadow-slate-900/10 hover:border-slate-300/50 transition-all duration-300">
+            <div className="h-1.5 bg-gradient-to-r from-[#118ff3] to-[#0c5798]" />
+            <div className="p-6 lg:p-8">
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="first_name" className="text-gray-700 font-medium">First Name *</Label>
+                    <Label htmlFor="first_name" className="text-slate-700 font-medium">First Name *</Label>
                     <Input
                       id="first_name"
                       value={coachData.first_name}
                       onChange={(e) => handleCoachDataChange("first_name", e.target.value)}
                       placeholder="John"
-                      className={`rounded-lg ${firstNameError ? "border-red-500" : "border-gray-200 focus:border-blue-500 focus:ring-blue-500"}`}
+                      className={`rounded-xl bg-white border-slate-200/50 focus:border-[#118ff3] focus:ring-[#118ff3] ${firstNameError ? "border-red-500" : ""}`}
                       required
                     />
                     {firstNameError && (
@@ -285,13 +291,13 @@ export default function CoachProfileCompletion({ user, onComplete }) {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="last_name" className="text-gray-700 font-medium">Last Name *</Label>
+                    <Label htmlFor="last_name" className="text-slate-700 font-medium">Last Name *</Label>
                     <Input
                       id="last_name"
                       value={coachData.last_name}
                       onChange={(e) => handleCoachDataChange("last_name", e.target.value)}
                       placeholder="Doe"
-                      className={`rounded-lg ${lastNameError ? "border-red-500" : "border-gray-200 focus:border-blue-500 focus:ring-blue-500"}`}
+                      className={`rounded-xl bg-white border-slate-200/50 focus:border-[#118ff3] focus:ring-[#118ff3] ${lastNameError ? "border-red-500" : ""}`}
                       required
                     />
                     {lastNameError && (
@@ -300,7 +306,7 @@ export default function CoachProfileCompletion({ user, onComplete }) {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="years_experience" className="text-gray-700 font-medium">Years of Coaching Experience *</Label>
+                    <Label htmlFor="years_experience" className="text-slate-700 font-medium">Years of Coaching Experience *</Label>
                     <Input
                       id="years_experience"
                       type="number"
@@ -309,24 +315,24 @@ export default function CoachProfileCompletion({ user, onComplete }) {
                       value={coachData.years_experience}
                       onChange={(e) => handleCoachDataChange("years_experience", parseInt(e.target.value) || "")}
                       placeholder="e.g., 5"
-                      className={`rounded-lg ${yearsExperienceError ? "border-red-500" : "border-gray-200 focus:border-blue-500 focus:ring-blue-500"}`}
+                      className={`rounded-xl bg-white border-slate-200/50 focus:border-[#118ff3] focus:ring-[#118ff3] ${yearsExperienceError ? "border-red-500" : ""}`}
                       required
                     />
                     {yearsExperienceError ? (
                       <p className="text-xs text-red-500">{yearsExperienceError}</p>
                     ) : (
-                      <p className="text-xs text-gray-500">Enter your years of coaching experience</p>
+                      <p className="text-xs text-slate-500">Enter your years of coaching experience</p>
                     )}
                   </div>
 
                   <div className="space-y-2 md:col-span-2">
-                    <Label className="text-gray-700 font-medium">Phone Number *</Label>
+                    <Label className="text-slate-700 font-medium">Phone Number *</Label>
                     <div className="flex gap-2">
                       <Select 
                         value={coachData.country_code} 
                         onValueChange={(value) => handleCoachDataChange("country_code", value)}
                       >
-                        <SelectTrigger className="w-[140px] rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500">
+                        <SelectTrigger className={`w-[140px] rounded-xl bg-white border-slate-200/50 focus:border-[#118ff3] focus:ring-[#118ff3] ${phoneError ? "border-red-500" : ""}`}>
                           <SelectValue placeholder="Code" />
                         </SelectTrigger>
                         <SelectContent>
@@ -343,14 +349,14 @@ export default function CoachProfileCompletion({ user, onComplete }) {
                         value={coachData.local_phone_number}
                         onChange={(e) => handleCoachDataChange("local_phone_number", e.target.value)}
                         placeholder="5551234567"
-                        className={`rounded-lg flex-1 ${phoneError ? "border-red-500" : "border-gray-200 focus:border-blue-500 focus:ring-blue-500"}`}
+                        className={`rounded-xl flex-1 bg-white border-slate-200/50 focus:border-[#118ff3] focus:ring-[#118ff3] ${phoneError ? "border-red-500" : ""}`}
                         required
                       />
                     </div>
                     {phoneError ? (
                       <p className="text-xs text-red-500">{phoneError}</p>
                     ) : (
-                      <p className="text-xs text-gray-500">Select your country code and enter your phone number</p>
+                      <p className="text-xs text-slate-500">Select your country code and enter your phone number</p>
                     )}
                   </div>
                 </div>
@@ -364,12 +370,12 @@ export default function CoachProfileCompletion({ user, onComplete }) {
                       <Button
                         type="button"
                         variant="outline"
-                        className="flex-1 rounded-lg border-gray-200 hover:bg-gray-50"
+                        className="flex-1 rounded-xl border-slate-200/50 hover:bg-slate-50 bg-white"
                       >
                         View Team Code
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden rounded-2xl border border-white/20 shadow-xl backdrop-blur-md bg-white/95">
+                    <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden rounded-3xl border border-slate-200/50 shadow-xl shadow-slate-900/10 backdrop-blur-xl bg-white/95">
                       <div className="h-1.5 bg-gradient-to-r from-[#118ff3] to-[#0c5798]" />
                       <div className="p-6 pt-4 pr-12 space-y-6">
                         <DialogHeader>
@@ -408,7 +414,7 @@ export default function CoachProfileCompletion({ user, onComplete }) {
                   </Dialog>
                   <Button
                     type="submit"
-                    className="flex-1 bg-gradient-to-r from-[#118ff3] to-[#0c5798] hover:from-[#0c5798] hover:to-[#118ff3] text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 px-4 py-3 h-10 text-sm"
+                    className="flex-1 bg-gradient-to-r from-[#118ff3] to-[#0c5798] hover:from-[#0c5798] hover:to-[#118ff3] text-white rounded-xl shadow-lg shadow-[#118ff3]/30 hover:shadow-xl transition-all duration-200 px-4 py-3 h-10 text-sm"
                     disabled={isSubmitting || hasErrors}
                   >
                     {isSubmitting ? "Completing Profile..." : "Complete Profile"}
@@ -418,17 +424,6 @@ export default function CoachProfileCompletion({ user, onComplete }) {
             </div>
           </div>
         </motion.div>
-
-        <div className="mt-6 text-center">
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-sm transition-all text-white border-2 border-red-600 bg-red-600 hover:bg-red-700 hover:border-red-700 mx-auto"
-          >
-            <LogOut className="w-4 h-4" />
-            Logout
-          </button>
-        </div>
       </div>
     </div>
   );
