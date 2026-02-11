@@ -79,9 +79,7 @@ export default function Dashboard() {
     validateTeam();
   }, [currentUser?.team_id, isLoadingUser]); // Removed loadCurrentUser, currentUser?.id, and isValidatingTeam
 
-  // Only show skeleton on initial load (no user yet) or during team validation.
-  // Once we have a user, silent refreshes from tab switches won't trigger this.
-  if ((isLoadingUser && !currentUser) || isValidatingTeam) {
+  if (isLoadingUser || isValidatingTeam) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-pulse space-y-6">

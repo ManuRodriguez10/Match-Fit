@@ -75,9 +75,7 @@ function LayoutContent({ children, currentPageName }) {
     `}</style>
   );
 
-  // Only show the loading screen during the INITIAL load (no user data yet).
-  // Once we have a currentUser, we never show this screen again — silent refreshes
-  // keep the user state updated without interrupting the UI.
+  // If still loading user data (except for landing page), show loading
   if (isLoadingUser && !currentUser && currentPageName !== "LandingPage") {
     return (
       <>

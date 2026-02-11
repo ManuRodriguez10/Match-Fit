@@ -302,7 +302,7 @@ export default function TeamSettingsPage() {
     }
   };
 
-  if ((isLoadingUser && !currentUser) || isLoading) {
+  if (isLoadingUser || isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#e7f3fe] via-white to-[#e7f3fe] relative overflow-hidden">
         <DashboardBackground />
