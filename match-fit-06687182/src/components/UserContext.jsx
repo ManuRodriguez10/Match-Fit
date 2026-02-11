@@ -112,6 +112,7 @@ export const UserProvider = ({ children }) => {
   const refreshInFlightRef = useRef(false);
   const visibilityHandledRef = useRef(false);
 
+<<<<<<< HEAD
   /**
    * Full load with loading state — used only for initial load and explicit reloads
    * (e.g., after onboarding completion, profile updates).
@@ -128,6 +129,113 @@ export const UserProvider = ({ children }) => {
 
         // If profile exists but team_role is missing, and user_metadata has it, sync silently
         if (result.profileData && !result.profileData.team_role && result.authUser.user_metadata?.team_role) {
+=======
+  const loadCurrentUser = async (options = {}) => {
+    const { silent = false } = options;
+    if (!silent) {
+      setIsLoadingUser(true);
+      isLoadingRef.current = true;
+    }
+
+    // Timeout fallback for ANY load - prevents infinite loading on hung requests (e.g. tab switch)
+    const LOAD_TIMEOUT_MS = 5000;
+    const loadTimeoutId = setTimeout(() => {
+      if (isLoadingRef.current) {
+        console.warn("loadCurrentUser timed out - clearing loading state");
+        setIsLoadingUser(false);
+        isLoadingRef.current = false;
+      }
+    }, LOAD_TIMEOUT_MS);
+
+    try {
+      // Add timeout around getUser - can hang when tab was suspended
+      const getUserPromise = supabase.auth.getUser();
+      const getUserTimeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("getUser timeout")), 3000)
+      );
+      const { data: authData, error: authError } = await Promise.race([getUserPromise, getUserTimeout]);
+      if (authError) {
+        console.log("Auth error:", authError);
+        throw authError;
+      }
+      
+      if (authData?.user) {
+        // Fetch profile with timeout to prevent hanging
+        let profileData = null;
+        try {
+          const profilePromise = supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', authData.user.id)
+            .maybeSingle();
+          
+          // Add timeout to profile fetch (2 seconds)
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Profile fetch timeout')), 2000)
+          );
+          
+          let fetchedProfile = null;
+          let profileError = null;
+          
+          try {
+            const result = await Promise.race([profilePromise, timeoutPromise]);
+            fetchedProfile = result?.data || null;
+            profileError = result?.error || null;
+          } catch (timeoutError) {
+            // Timeout occurred, continue with null profile
+            console.warn("Profile fetch timed out, continuing without profile");
+            fetchedProfile = null;
+            profileError = null;
+          }
+          
+          // If profile doesn't exist, try to create it
+          if (!fetchedProfile && !profileError) {
+            console.log("Profile not found, creating one...");
+            const { data: newProfile, error: createError } = await supabase
+              .from('profiles')
+              .insert({
+                id: authData.user.id,
+                full_name: '',
+                role: null,
+                team_role: null
+              })
+              .select()
+              .single();
+            
+            if (createError) {
+              console.error("Error creating profile:", createError);
+              // Continue anyway - profile will be null, user can complete role setup
+            } else {
+              profileData = newProfile;
+            }
+          } else if (profileError && profileError.message !== 'Profile fetch timeout') {
+            console.error("Error fetching profile:", profileError);
+            // Continue anyway - profile will be null
+          } else {
+            profileData = fetchedProfile;
+          }
+        } catch (error) {
+          console.error("Profile fetch error:", error);
+          // Continue with null profile - user can complete role setup
+        }
+        
+        // Merge auth user with profile data (profileData can be null - that's OK)
+        const user = {
+          ...authData.user,
+          ...(profileData || {}),
+          // Fallback to user_metadata if profile doesn't exist yet
+          full_name: profileData?.full_name || authData.user.user_metadata?.full_name || authData.user.email,
+          role: profileData?.role || authData.user.user_metadata?.role || null,
+          team_role: profileData?.team_role || authData.user.user_metadata?.team_role || null,
+          team_id: profileData?.team_id || null,
+          jersey_number: profileData?.jersey_number || null,
+          position: profileData?.position || null
+        };
+        
+        // If profile exists but team_role is missing, and user_metadata has it, update the profile
+        if (profileData && !profileData.team_role && authData.user.user_metadata?.team_role) {
+          // Silently update the profile in the background
+>>>>>>> 73cbd6fa (Navigation fix on player dashboard)
           supabase
             .from('profiles')
             .update({ team_role: result.authUser.user_metadata.team_role })
@@ -146,10 +254,40 @@ export const UserProvider = ({ children }) => {
         currentUserRef.current = null;
       }
     } catch (error) {
-      console.log("User not authenticated:", error);
+      console.log("User load error:", error);
+
+      // Don't clear user on timeout - preserve existing session (common after tab switch)
+      const isTimeout = error?.message === "getUser timeout" ||
+                       error?.message === "Profile fetch timeout";
+      if (isTimeout && currentUserRef.current) {
+        // Keep existing user - don't log out on transient timeout
+        return;
+      }
+      
+      // Check if this is an invalid JWT error (403, user doesn't exist)
+      const isInvalidJWT = error?.status === 403 || 
+                          error?.message?.includes("User from sub claim in JWT does not exist") ||
+                          error?.message?.includes("JWT") ||
+                          error?.code === 'invalid_token';
+      
+      // If invalid JWT, clear the session to remove stale token
+      if (isInvalidJWT) {
+        console.log("Invalid JWT detected, clearing session...");
+        try {
+          await supabase.auth.signOut({ scope: 'local' });
+        } catch (signOutError) {
+          console.warn("Error clearing session:", signOutError);
+        }
+      }
+      
       setCurrentUser(null);
       currentUserRef.current = null;
     } finally {
+<<<<<<< HEAD
+=======
+      clearTimeout(loadTimeoutId);
+      // ALWAYS set loading to false, even if there were errors
+>>>>>>> 73cbd6fa (Navigation fix on player dashboard)
       setIsLoadingUser(false);
       isLoadingRef.current = false;
     }
@@ -219,6 +357,7 @@ export const UserProvider = ({ children }) => {
      * We set a flag to debounce against the duplicate 'focus' event.
      */
     const handleVisibilityChange = async () => {
+<<<<<<< HEAD
       if (document.hidden || !hasCompletedInitialLoadRef.current) {
         return;
       }
@@ -240,6 +379,30 @@ export const UserProvider = ({ children }) => {
             setCurrentUser(null);
             currentUserRef.current = null;
             setIsLoadingUser(false);
+=======
+      if (!document.hidden && hasCompletedInitialLoadRef.current) {
+        // If we've been loading for a long time (possible hung load), force clear and retry
+        if (isLoadingRef.current) {
+          console.warn("Visibility change: clearing stuck loading state and retrying");
+          setIsLoadingUser(false);
+          isLoadingRef.current = false;
+          await loadCurrentUser({ silent: true });
+          return;
+        }
+        // Tab became visible and initial load is complete
+        try {
+          // Check if we have a session
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+          
+          if (sessionError || !session) {
+            // getSession() can falsely return null after tab suspension
+            // If we already have a user, trust it - don't reload
+            // Only reload if we don't have a user
+            if (!currentUserRef.current) {
+              await loadCurrentUser({ silent: true });
+            }
+            return;
+>>>>>>> 73cbd6fa (Navigation fix on player dashboard)
           }
           return;
         }
@@ -268,24 +431,59 @@ export const UserProvider = ({ children }) => {
       }
     };
 
+<<<<<<< HEAD
+=======
+    // Handle page restore from bfcache (back/forward navigation)
+    const handlePageShow = (event) => {
+      if (event.persisted && hasCompletedInitialLoadRef.current) {
+        // Only reload if we don't already have a user
+        if (!currentUserRef.current) {
+          loadCurrentUser({ silent: true });
+        }
+      }
+    };
+    
+>>>>>>> 73cbd6fa (Navigation fix on player dashboard)
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('focus', handleWindowFocus);
+    window.addEventListener('pageshow', handlePageShow);
 
     const {
       data: { subscription }
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (_event === 'TOKEN_REFRESHED' || _event === 'SIGNED_IN') {
+<<<<<<< HEAD
         if (hasCompletedInitialLoadRef.current) {
           // KEY FIX: Use silent refresh so the UI doesn't flash a loading screen
           await silentRefreshUser();
+=======
+        // Token was refreshed or user was signed in - reload user to ensure everything is in sync
+        // Use silent:true to avoid showing loading spinner on tab focus (prevents stuck spinner)
+        if (hasCompletedInitialLoadRef.current) {
+          await loadCurrentUser({ silent: true });
+        } else {
+          // Still in initial load, let the initial load process handle it
+          // But don't skip it completely - we need to ensure user gets loaded
+          // If we're here, it means initial load hasn't completed yet, so let it continue
+>>>>>>> 73cbd6fa (Navigation fix on player dashboard)
         }
         return;
       }
 
       if (_event === 'INITIAL_SESSION') {
+<<<<<<< HEAD
         if (hasCompletedInitialLoadRef.current && !currentUserRef.current) {
           // No current user but we got a session — do a silent refresh
           await silentRefreshUser();
+=======
+        // INITIAL_SESSION fires when Supabase initializes - handle it appropriately
+        if (hasCompletedInitialLoadRef.current) {
+          // Initial load is complete, but we got INITIAL_SESSION (e.g., after tab switch)
+          // Only reload if we don't have a current user - use silent to avoid stuck spinner
+          if (!currentUserRef.current) {
+            await loadCurrentUser({ silent: true });
+          }
+>>>>>>> 73cbd6fa (Navigation fix on player dashboard)
         }
         return;
       }
@@ -308,6 +506,7 @@ export const UserProvider = ({ children }) => {
       subscription.unsubscribe();
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleWindowFocus);
+      window.removeEventListener('pageshow', handlePageShow);
     };
   }, [loadCurrentUser, silentRefreshUser]);
 

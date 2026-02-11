@@ -355,7 +355,7 @@ export default function RosterMemberDetails({ member, currentUser, onClose, onPl
                       : isMemberHeadCoach
                       ? "Head coaches cannot be removed from the team"
                       : isPlayer 
-                      ? "Only head coaches can remove players from the roster" 
+                      ? "Only coaches can remove players from the roster" 
                       : "Only head coaches can remove coaches from the roster"
                   } 
                 />

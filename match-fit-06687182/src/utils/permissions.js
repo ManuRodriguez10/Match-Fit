@@ -19,7 +19,7 @@ export const canDeleteTeam = (user) => {
 };
 
 export const canRemovePlayers = (user) => {
-  return isHeadCoach(user);
+  return isHeadCoach(user) || isAssistantCoach(user);
 };
 
 export const canRemoveCoaches = (user) => {

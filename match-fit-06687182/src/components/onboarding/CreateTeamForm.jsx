@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function CreateTeamForm({ user, onComplete, onBack }) {
@@ -97,14 +97,6 @@ export default function CreateTeamForm({ user, onComplete, onBack }) {
           <div className="p-8">
             {/* Header */}
             <div className="mb-8">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={onBack} 
-                className="mb-4 hover:bg-blue-50"
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
               <div className="flex items-center justify-center mb-4">
                 <div className="w-16 h-16 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center shadow-lg">
                   <Plus className="w-8 h-8 text-white" />

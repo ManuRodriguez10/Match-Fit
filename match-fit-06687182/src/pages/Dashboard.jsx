@@ -6,12 +6,23 @@ import PlayerDashboard from "../components/dashboard/PlayerDashboard";
 import TeamOnboarding from "../components/onboarding/TeamOnboarding";
 import PlayerProfileCompletion from "../components/onboarding/PlayerProfileCompletion";
 import CoachProfileCompletion from "../components/onboarding/CoachProfileCompletion";
+import PlayerCodePage from "../components/onboarding/PlayerCodePage";
+import CreateTeamForm from "../components/onboarding/CreateTeamForm";
 
 export default function Dashboard() {
   const { currentUser, isLoadingUser, loadCurrentUser } = useUser();
   const [isValidatingTeam, setIsValidatingTeam] = useState(false);
+  const [showPlayerCodePage, setShowPlayerCodePage] = useState(false);
+  const [showCreateTeamForm, setShowCreateTeamForm] = useState(false);
   const lastValidatedTeamIdRef = useRef(null);
   const isValidatingRef = useRef(false);
+
+  // Reset showCreateTeamForm when team_id is set (team successfully created)
+  useEffect(() => {
+    if (currentUser?.team_id) {
+      setShowCreateTeamForm(false);
+    }
+  }, [currentUser?.team_id]);
 
   // Validate that team_id actually exists in the database
   // Only validate once per team_id change, not on every user update
@@ -99,6 +110,21 @@ export default function Dashboard() {
 
   // Stage 1: Check if user has joined/created a team
   if (!currentUser.team_id) {
+    // If we're coming back from coach profile completion, show CreateTeamForm directly
+    if (showCreateTeamForm) {
+      return (
+        <CreateTeamForm 
+          user={currentUser} 
+          onComplete={async () => {
+            setShowCreateTeamForm(false);
+            await loadCurrentUser();
+          }}
+          onBack={() => {
+            setShowCreateTeamForm(false);
+          }}
+        />
+      );
+    }
     return <TeamOnboarding user={currentUser} onComplete={loadCurrentUser} />;
   }
 
@@ -109,7 +135,34 @@ export default function Dashboard() {
 
   // Stage 3: For coaches, check if they've completed their profile for this team
   if (currentUser.team_role === "coach" && currentUser.profile_completed_for_team_id !== currentUser.team_id) {
-    return <CoachProfileCompletion user={currentUser} onComplete={loadCurrentUser} />;
+    return (
+      <CoachProfileCompletion
+        user={currentUser}
+        onComplete={async () => {
+          await loadCurrentUser();
+          setShowPlayerCodePage(true);
+        }}
+        onBack={async () => {
+          // Clear team_id and show CreateTeamForm directly (not TeamOnboarding)
+          await supabase.from("profiles").update({ team_id: null }).eq("id", currentUser.id);
+          setShowCreateTeamForm(true);
+          loadCurrentUser();
+        }}
+      />
+    );
+  }
+
+  // Stage 4: Show player code page after coach profile completion
+  if (currentUser.team_role === "coach" && showPlayerCodePage && currentUser.profile_completed_for_team_id === currentUser.team_id) {
+    return (
+      <PlayerCodePage
+        user={currentUser}
+        onComplete={() => {
+          setShowPlayerCodePage(false);
+          loadCurrentUser();
+        }}
+      />
+    );
   }
 
   // All onboarding complete - show appropriate dashboard
