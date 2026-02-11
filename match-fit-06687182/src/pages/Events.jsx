@@ -11,7 +11,7 @@ import { Lock, User } from "lucide-react";
 export default function EventsPage() {
   const { currentUser, isLoadingUser } = useUser();
 
-  if (isLoadingUser) {
+  if (isLoadingUser && !currentUser) {
     return (
       <div className="p-6">
         <div className="animate-pulse space-y-6">
