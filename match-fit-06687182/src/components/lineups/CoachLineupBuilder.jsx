@@ -27,6 +27,7 @@ export default function CoachLineupBuilder({ user }) {
   const [substitutes, setSubstitutes] = useState([]);
   const [existingLineup, setExistingLineup] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingLineup, setIsLoadingLineup] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [showPlayerModal, setShowPlayerModal] = useState(false);
@@ -41,7 +42,10 @@ export default function CoachLineupBuilder({ user }) {
 
   useEffect(() => {
     if (selectedEventId) {
-      loadLineupForEvent(selectedEventId);
+      setIsLoadingLineup(true);
+      loadLineupForEvent(selectedEventId).finally(() => {
+        setIsLoadingLineup(false);
+      });
       const event = events.find(e => e.id === selectedEventId);
       setSelectedEvent(event);
       // Reset edit mode when switching events
@@ -719,7 +723,16 @@ export default function CoachLineupBuilder({ user }) {
 
           {selectedEventId && !isSelectedEventPast && (
             <>
-              {existingLineup?.published && !isEditMode ? (
+              {isLoadingLineup ? (
+                <Card className="bg-white/80 backdrop-blur-xl border border-slate-200/50 shadow-lg rounded-3xl">
+                  <CardContent className="py-16">
+                    <div className="flex flex-col items-center justify-center gap-4">
+                      <Loader2 className="w-12 h-12 text-[#118ff3] animate-spin" />
+                      <p className="text-slate-600">Loading lineup...</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : existingLineup?.published && !isEditMode ? (
                 // Read-only view for published lineups
                 <>
                   <Card className="bg-white/80 backdrop-blur-xl border border-slate-200/50 shadow-lg rounded-3xl">

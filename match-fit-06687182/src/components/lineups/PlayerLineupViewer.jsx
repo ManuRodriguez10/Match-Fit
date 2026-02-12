@@ -18,6 +18,13 @@ export default function PlayerLineupViewer({ user, initialEventId }) {
 
   useEffect(() => {
     loadData();
+
+    // Auto-refresh every 30 seconds to check for lineup updates
+    const refreshInterval = setInterval(() => {
+      loadData();
+    }, 30000);
+
+    return () => clearInterval(refreshInterval);
   }, []);
 
   useEffect(() => {

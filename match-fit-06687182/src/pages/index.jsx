@@ -71,33 +71,42 @@ function PagesContent() {
     
     return (
         <Layout currentPageName={currentPage}>
-            <Routes>            
-                
-                    <Route path="/" element={<LandingPage />} />
-                
-                
+            <Routes>
+                <Route path="/" element={<LandingPage />} />
+
+                {/* Case-insensitive routes - lowercase versions */}
+                <Route path="/landingpage" element={<LandingPage />} />
                 <Route path="/LandingPage" element={<LandingPage />} />
-                
+
+                <Route path="/login" element={<Login />} />
                 <Route path="/Login" element={<Login />} />
-                
+
+                <Route path="/signup" element={<Signup />} />
                 <Route path="/Signup" element={<Signup />} />
-                
+
+                <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/Dashboard" element={<Dashboard />} />
-                
+
+                <Route path="/events" element={<Events />} />
                 <Route path="/Events" element={<Events />} />
-                
+
+                <Route path="/roster" element={<Roster />} />
                 <Route path="/Roster" element={<Roster />} />
-                
+
+                <Route path="/lineups" element={<Lineups />} />
                 <Route path="/Lineups" element={<Lineups />} />
-                
+
+                <Route path="/teamsettings" element={<TeamSettings />} />
                 <Route path="/TeamSettings" element={<TeamSettings />} />
-                
+
+                <Route path="/profile" element={<Profile />} />
                 <Route path="/Profile" element={<Profile />} />
-                
+
+                <Route path="/playerroster" element={<PlayerRoster />} />
                 <Route path="/PlayerRoster" element={<PlayerRoster />} />
-                
+
+                <Route path="/coachprofile" element={<CoachProfile />} />
                 <Route path="/CoachProfile" element={<CoachProfile />} />
-                
             </Routes>
         </Layout>
     );
