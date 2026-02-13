@@ -565,31 +565,31 @@ export default function CoachLineupBuilder({ user }) {
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-6"
         >
-          <div>
+        <div>
             <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-2">
               <span className="bg-gradient-to-r from-[#118ff3] to-[#0c5798] bg-clip-text text-transparent">
                 Lineup Builder
               </span>
             </h1>
             <p className="text-slate-600 text-lg">Create and manage game lineups</p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Link to={createPageUrl("Events")}>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Link to={createPageUrl("Events")}>
               <Button className="bg-gradient-to-r from-[#118ff3] to-[#0c5798] hover:from-[#0c5798] hover:to-[#118ff3] text-white rounded-xl px-6 py-6 h-auto shadow-lg shadow-[#118ff3]/30">
                 <Plus className="w-5 h-5 mr-2" />
-                Add New Game
-              </Button>
-            </Link>
-            {existingLineup && !isSelectedEventPast && (
+              Add New Game
+            </Button>
+          </Link>
+          {existingLineup && !isSelectedEventPast && (
               <Button 
                 onClick={handleDeleteLineup} 
                 className="bg-red-600 hover:bg-red-700 text-white border border-red-600 hover:border-red-700 rounded-xl px-6 py-6 h-auto shadow-lg"
               >
                 <Trash2 className="w-5 h-5 mr-2" />
-                Delete Lineup
-              </Button>
-            )}
-          </div>
+              Delete Lineup
+            </Button>
+          )}
+        </div>
         </motion.div>
 
         {existingLineup?.published && !isEditMode && (
@@ -602,7 +602,7 @@ export default function CoachLineupBuilder({ user }) {
               <div className="flex items-center gap-3">
                 <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
                 <p className="text-green-800 font-medium">
-                  This lineup has been published and players have been notified.
+            This lineup has been published and players have been notified.
                 </p>
               </div>
               <Button
@@ -613,9 +613,9 @@ export default function CoachLineupBuilder({ user }) {
               </Button>
             </div>
           </motion.div>
-        )}
+      )}
 
-        {isSelectedEventPast && (
+      {isSelectedEventPast && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -624,13 +624,13 @@ export default function CoachLineupBuilder({ user }) {
             <div className="flex items-center gap-3">
               <Calendar className="h-5 w-5 text-amber-600 flex-shrink-0" />
               <p className="text-amber-800 font-medium">
-                This game has already passed. Lineups cannot be created or edited for past events.
+            This game has already passed. Lineups cannot be created or edited for past events.
               </p>
             </div>
           </motion.div>
-        )}
+      )}
 
-        {events.length === 0 ? (
+      {events.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -648,7 +648,7 @@ export default function CoachLineupBuilder({ user }) {
               </Button>
             </Link>
           </motion.div>
-        ) : upcomingEvents.length === 0 ? (
+      ) : upcomingEvents.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -666,7 +666,7 @@ export default function CoachLineupBuilder({ user }) {
               </Button>
             </Link>
           </motion.div>
-        ) : (
+      ) : (
         <>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card className="bg-white/80 backdrop-blur-xl border border-slate-200/50 shadow-lg rounded-3xl">
@@ -799,107 +799,107 @@ export default function CoachLineupBuilder({ user }) {
                         Cancel
                       </Button>
                     )}
-                    <Button
-                      onClick={handleClearLineup}
-                      disabled={isSaving || isPublishing || (startingLineup.length === 0 && substitutes.length === 0)}
+                <Button
+                  onClick={handleClearLineup}
+                  disabled={isSaving || isPublishing || (startingLineup.length === 0 && substitutes.length === 0)}
                       className="flex-1 bg-white/80 backdrop-blur-xl border border-slate-200/50 text-slate-700 hover:bg-white hover:border-slate-300 rounded-xl px-6 py-6 h-auto shadow-lg"
-                    >
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                      Clear Lineup
-                    </Button>
-                    <Button
-                      onClick={handleSaveDraft}
-                      disabled={isSaving || isPublishing}
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Clear Lineup
+                </Button>
+                <Button
+                  onClick={handleSaveDraft}
+                  disabled={isSaving || isPublishing}
                       className="flex-1 bg-white/80 backdrop-blur-xl border border-slate-200/50 text-slate-700 hover:bg-white hover:border-slate-300 rounded-xl px-6 py-6 h-auto shadow-lg"
-                    >
-                      {isSaving ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <Save className="w-4 h-4 mr-2" />
-                      )}
-                      Save Draft
-                    </Button>
-                    <Button
-                      onClick={handlePublish}
+                >
+                  {isSaving ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4 mr-2" />
+                  )}
+                  Save Draft
+                </Button>
+                <Button
+                  onClick={handlePublish}
                       disabled={isSaving || isPublishing}
                       className="flex-1 bg-gradient-to-r from-[#118ff3] to-[#0c5798] hover:from-[#0c5798] hover:to-[#118ff3] text-white rounded-xl px-6 py-6 h-auto shadow-lg shadow-[#118ff3]/30"
-                    >
-                      {isPublishing ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <Send className="w-4 h-4 mr-2" />
-                      )}
+                >
+                  {isPublishing ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4 mr-2" />
+                  )}
                       {existingLineup?.published ? "Update & Re-notify Players" : "Publish & Notify Players"}
-                    </Button>
-                  </div>
+                </Button>
+              </div>
 
                   <Card className="bg-white/80 backdrop-blur-xl border border-slate-200/50 shadow-lg rounded-3xl">
                     <CardHeader className="border-b border-slate-200/50">
                       <CardTitle className="text-xl font-bold text-slate-900">Starting Lineup ({startingLineup.length}/11)</CardTitle>
-                    </CardHeader>
+                </CardHeader>
                     <CardContent className="pt-6">
-                      <div className="w-full mx-auto lg:max-w-4xl xl:max-w-5xl">
-                        <LineupField
-                          formation={formation}
-                          positions={getFieldPositions()}
-                          startingLineup={startingLineup}
-                          players={players}
-                          onPositionClick={handlePositionClick}
-                          onRemovePlayer={handleRemovePlayer}
-                          isEditable={true}
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <div className="w-full mx-auto lg:max-w-4xl xl:max-w-5xl">
+                    <LineupField
+                      formation={formation}
+                      positions={getFieldPositions()}
+                      startingLineup={startingLineup}
+                      players={players}
+                      onPositionClick={handlePositionClick}
+                      onRemovePlayer={handleRemovePlayer}
+                      isEditable={true}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
 
                   <Card className="bg-white/80 backdrop-blur-xl border border-slate-200/50 shadow-lg rounded-3xl">
                     <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0 border-b border-slate-200/50">
                       <CardTitle className="text-xl font-bold text-slate-900">Substitutes ({substitutes.length})</CardTitle>
-                      <Button
-                        onClick={() => setBenchSlots(benchSlots + 1)}
+                  <Button
+                    onClick={() => setBenchSlots(benchSlots + 1)}
                         className="bg-white/80 backdrop-blur-xl border border-slate-200/50 text-slate-700 hover:bg-white hover:border-slate-300 rounded-xl shadow-lg w-full sm:w-auto"
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Bench Slot
-                      </Button>
-                    </CardHeader>
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Bench Slot
+                  </Button>
+                </CardHeader>
                     <CardContent className="pt-6">
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
-                        {Array.from({ length: benchSlots }).map((_, index) => {
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
+                    {Array.from({ length: benchSlots }).map((_, index) => {
                           const playerId = substitutes[index];
                           const player = playerId ? players.find(p => p.id === playerId) : null;
-                          
-                          return (
-                            <div
-                              key={index}
+                      
+                      return (
+                        <div
+                          key={index}
                               className="relative bg-white/80 backdrop-blur-xl border-2 border-dashed border-slate-300/50 rounded-xl p-3 hover:border-[#118ff3] hover:shadow-lg transition-all cursor-pointer"
-                              onClick={() => {
+                          onClick={() => {
                                 if (!playerId) {
-                                  setSelectedPosition("bench");
-                                  setShowPlayerModal(true);
-                                }
-                              }}
-                            >
-                              {player ? (
-                                <div className="text-center">
-                                  <div className="w-10 h-10 mx-auto bg-gray-200 rounded-full flex items-center justify-center font-bold text-base mb-2">
-                                    {player.jersey_number}
-                                  </div>
-                                  <p className="text-xs font-medium truncate">
+                              setSelectedPosition("bench");
+                              setShowPlayerModal(true);
+                            }
+                          }}
+                        >
+                          {player ? (
+                            <div className="text-center">
+                              <div className="w-10 h-10 mx-auto bg-gray-200 rounded-full flex items-center justify-center font-bold text-base mb-2">
+                                {player.jersey_number}
+                              </div>
+                              <p className="text-xs font-medium truncate">
                                     {player.first_name && player.last_name ? `${player.first_name} ${player.last_name}` : (player.email || `Player ${player.id.slice(0, 8)}`)}
-                                  </p>
-                                  <p className="text-[10px] text-gray-500 capitalize truncate">{player.position}</p>
-                                  <Button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
+                              </p>
+                              <p className="text-[10px] text-gray-500 capitalize truncate">{player.position}</p>
+                              <Button
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                       handleRemoveSub(playerId);
-                                    }}
+                                }}
                                     className="mt-2 w-full text-xs h-7 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-lg"
-                                  >
-                                    Remove
-                                  </Button>
-                                </div>
-                              ) : (
+                              >
+                                Remove
+                              </Button>
+                            </div>
+                          ) : (
                                 <div className="text-center text-gray-400 relative">
                                   {/* Add delete button for empty slots */}
                                   {benchSlots > substitutes.length && (
@@ -915,14 +915,14 @@ export default function CoachLineupBuilder({ user }) {
                                   )}
                                   <Plus className="w-6 h-6 mx-auto mb-1 text-slate-400" />
                                   <p className="text-[10px] text-slate-500">Add Player</p>
-                                </div>
-                              )}
                             </div>
-                          );
-                        })}
-                      </div>
-                    </CardContent>
-                  </Card>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
                 </>
               )}
             </>

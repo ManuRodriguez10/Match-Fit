@@ -36,7 +36,7 @@ export default function PlayerRosterPage() {
 
   useEffect(() => {
     if (currentUser) {
-      loadData();
+    loadData();
     }
   }, [currentUser]);
 
@@ -84,9 +84,9 @@ export default function PlayerRosterPage() {
         <DashboardBackground />
         <DashboardNav user={currentUser} />
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
-          <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-            <div className="h-64 bg-gray-200 rounded"></div>
+        <div className="animate-pulse space-y-6">
+          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+          <div className="h-64 bg-gray-200 rounded"></div>
           </div>
         </div>
       </div>
@@ -206,7 +206,7 @@ export default function PlayerRosterPage() {
     const parsedDate = parseLocalDate(player.date_of_birth);
     return (
       <motion.div
-        key={player.id}
+        key={player.id} 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: index * 0.05 }}
@@ -254,7 +254,7 @@ export default function PlayerRosterPage() {
               <p className="text-sm font-semibold text-slate-900">{player.weight || "N/A"}</p>
             </div>
             {player.nationality && (
-              <div className="col-span-2">
+            <div className="col-span-2">
                 <p className="text-xs text-slate-500 mb-1">Nationality</p>
                 <p className="text-sm font-semibold text-slate-900">{player.nationality}</p>
               </div>
@@ -316,7 +316,7 @@ export default function PlayerRosterPage() {
 
   const renderCoachCard = (coach, index) => (
     <motion.div
-      key={coach.id}
+      key={coach.id} 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
@@ -338,10 +338,10 @@ export default function PlayerRosterPage() {
           </div>
         </div>
         <div className="mt-4 pt-4 border-t border-slate-100 space-y-2">
-          <div>
+            <div>
             <p className="text-xs text-slate-500 mb-1">Email</p>
             <p className="text-sm font-semibold text-slate-900">{coach.email}</p>
-          </div>
+            </div>
           {coach.phone && (
             <div>
               <p className="text-xs text-slate-500 mb-1">Phone</p>
@@ -352,7 +352,7 @@ export default function PlayerRosterPage() {
       </div>
     </motion.div>
   );
-
+  
   const hasMembers = teamMembers.length > 0;
   const hasPlayers = allPlayers.length > 0;
   const hasCoaches = coaches.length > 0;
@@ -368,7 +368,7 @@ export default function PlayerRosterPage() {
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col sm:flex-row sm:items-end justify-between gap-6"
         >
-          <div>
+      <div>
             <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-2">
               <span className="bg-gradient-to-r from-[#118ff3] to-[#0c5798] bg-clip-text text-transparent">
                 {view === "coaches" ? "Coaching Staff" : view === "players" ? "Players" : "Team Roster"}
@@ -379,8 +379,8 @@ export default function PlayerRosterPage() {
                 {team?.name ? `${team.name} - ` : ""}
                 {view === "coaches" ? "View your coaching staff" : view === "players" ? "View your teammates" : "View your team members"}
               </span>
-            </p>
-          </div>
+        </p>
+      </div>
           {view && (
             <Button
               onClick={() => { setView(null); setSelectedPosition("all"); }}
@@ -392,13 +392,13 @@ export default function PlayerRosterPage() {
           )}
         </motion.div>
 
-        {selectedMember && (
-          <RosterMemberDetails
-            member={selectedMember}
-            currentUser={currentUser}
-            onClose={() => setSelectedMember(null)}
-          />
-        )}
+      {selectedMember && (
+        <RosterMemberDetails
+          member={selectedMember}
+          currentUser={currentUser}
+          onClose={() => setSelectedMember(null)}
+        />
+      )}
 
         {!view && (
           <motion.div
@@ -420,8 +420,8 @@ export default function PlayerRosterPage() {
                   <h3 className="text-2xl font-bold text-slate-900 mb-2">Coaching Staff</h3>
                   <p className="text-sm text-slate-600 mb-4">
                     {hasCoaches ? `${coaches.length} ${coaches.length === 1 ? 'coach' : 'coaches'}` : 'No coaches'}
-                  </p>
-                </div>
+          </p>
+        </div>
               </div>
             </motion.div>
 
@@ -451,7 +451,7 @@ export default function PlayerRosterPage() {
             {hasCoaches ? (
               <>
                 {headCoaches.length > 0 && (
-                  <div className="space-y-4">
+            <div className="space-y-4">
                     <h2 className="text-2xl font-bold text-slate-900">Head Coach</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {headCoaches.map((coach, index) => renderCoachCard(coach, index))}
